@@ -387,7 +387,8 @@
       max_price: state.maxPrice && state.maxPrice > 0 ? Number(state.maxPrice) : null,
       sort_by: state.sort || 'relevance',
       page_num: state.page,
-      page_limit: state.limit
+      page_limit: state.limit,
+      seed_val: state.seed
     };
 
     try {
@@ -789,6 +790,9 @@
 
     sortSelect.addEventListener('change', (e) => {
       state.sort = e.target.value;
+      if (state.sort === 'relevance') {
+        state.seed = getRandomSeed();
+      }
       state.page = 1;
       triggerSearch();
     });

@@ -1,13 +1,19 @@
-# BOMwala 
+# BOMwala (not ভম্বোলা )
 
 A local parts aggregator and search tool for electronics hobbyists and engineers in Bangladesh.
 
-Imagine finalizing a design, only to find that some parts are out of stock—forcing you to repeatedly redesign around what's actually available. Worse, you buy a component only to discover later that another local shop had it significantly cheaper. Sifting through multiple store sites drains hours that should be spent building.
+- **Web App:** https://bomwala.netlify.app
+- **AI Hardware Planner:** https://notebook.google.com/notebook/d41b8307-f082-48b7-936f-6663286d4853
 
+BOMwala indexes inventory across mainstream BD electronics retailers into a unified catalog and pairs it with Google NotebookLM for planning circuits against live, verified local stock.
 
-## AI Support
+**Last scraped:** October 22, 2026. Catalogs are re-scraped roughly every পবিত্র বিশ্যুতবার রাত।
 
-If you prefer planning projects against local stock using an LLM, the catalog of ~17,800 in-stock components is loaded into Google NotebookLM:
+---
+
+## AI Hardware Planner
+
+The catalog of ~17,800 in-stock components is loaded into Google NotebookLM:
 
 👉 **[BOMwala on Google NotebookLM](https://notebook.google.com/notebook/d41b8307-f082-48b7-936f-6663286d4853)**
 
@@ -34,3 +40,14 @@ You can ask it to:
 | **VoltHBD** | [volthbd.com](https://www.volthbd.com) | 752 | 663 |
 | **Total** | | **21,021** | **17,863** |
 
+---
+
+## Local Setup
+
+```bash
+git clone https://github.com/ShahMdAbid/BOMwala.git
+cd BOMwala
+pip install -r requirements.txt
+python -m uvicorn web.server:app --reload --port 8000
+```
+Open `http://127.0.0.1:8000` in your browser.
