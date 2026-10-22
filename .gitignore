@@ -1,0 +1,28 @@
+# Raw store scraper databases and CSVs in root
+/*.db
+/*_components.csv
+/bangladesh_components_master.*
+
+# Internal Datasets & Exports
+website&AI/
+
+# Local Agent Skills & Private Manuals
+.agents/
+
+# Scratch & Experimental R&D
+scratch/
+ai_analysis/
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.bak
+
+# Logs
+scrapers/logs/
+*.log
+
+# OS Specific
+.DS_Store
+Thumbs.db

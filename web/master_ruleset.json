@@ -1,0 +1,942 @@
+{
+  "noise_patterns_to_strip": [
+    "(?i)\\s*(?:for|compatible with|works with|support|fits|ideal for)\\s+(?:arduino|esp32|esp8266|raspberry\\s*pi|stm32|pic|avr|arm|robotics|nodemcu|mcu|smart\\s*car|diy|project)[\\w\\s]*",
+    "(?i)\\s*[\\(\\[]?(?:china|original(?: chip)?|high quality|premium|genuine|imported|local chip|tested|refurbished|used|new|brand new|free delivery|made in [a-zA-Z\\s]+)[\\)\\]]?",
+    "(?i)\\s*[\\(\\[]?(?:1\\s*pcs?|pack of \\d+|\\d+\\s*pcs?|\\d+\\s*pieces?|pair|set of \\d+|combo)[\\)\\]]?",
+    "(?i)[\\-\\|/,]\\s*(?:best price in bangladesh|robotics bangladesh|electronicsbd|techshopbd|bdtronics).*",
+    "(?i)\\s*\\(?(?:limited quantity|hq|standard quality|average quality)\\)?"
+  ],
+  "high_priority_override_rules": [
+    {
+      "override_component_type": "accessory_expansion",
+      "trigger_patterns": [
+        "(?i)\\b(?:expansion\\s*board|breakout\\s*board|shield|adapter|programmer|debugger|downloader|emulator|hat|base\\s*board|antenna|flasher|burning\\s*fixture|converter)\\b"
+      ],
+      "exclude_patterns": [
+        "(?i)\\b(?:cnc\\s*shield|ramps)\\b"
+      ]
+    },
+    {
+      "override_component_type": "hardware_enclosure",
+      "trigger_patterns": [
+        "(?i)\\b(?:case|enclosure|shell|box|chassis|bracket|mount|acrylic|spacer|standoff|screw|nut|heat\\s*sink|cooling\\s*fan|holder|heatsink|bearing|pulley|washer|bumper|cover|wheel|disc|strip|nickel)\\b"
+      ],
+      "exclude_patterns": [
+        "(?i)(?:with|w/)\\s+(?:case|cooling|fan|heatsink|holder|wheel|antenna)"
+      ]
+    },
+    {
+      "override_component_type": "wiring_connector",
+      "trigger_patterns": [
+        "(?i)\\b(?:jumper\\s*wire|dupont|cable|connector|pin\\s*header|terminal\\s*block|socket|jack|plug|pigtail|awg|zip\\s*tie|clip)\\b",
+        "(?i)\\b(?:test\\s*lead|multimeter\\s*probe|test\\s*probe)\\b"
+      ],
+      "exclude_patterns": [
+        "(?i)(?:with|w/)\\s+(?:cable|wire|usb|connector)"
+      ]
+    },
+    {
+      "override_component_type": "passive_component",
+      "trigger_patterns": [
+        "(?i)\\b(?:resistor|capacitor|diode|transistor|inductor|potentiometer|mosfet|triac|led|trimpot|thermistor)\\b"
+      ],
+      "exclude_patterns": [
+        "(?i)\\b(?:module|board|shield|tester|meter)\\b"
+      ]
+    }
+  ],
+  "canonical_models": [
+    {
+      "model_group_id": "esp32_devkit_38pin",
+      "canonical_name": "ESP32 NodeMCU Development Board (38-Pin)",
+      "component_type": "microcontroller_board",
+      "match_patterns": [
+        "(?i)\\besp32\\b.*\\b38[\\-\\s]*p(?:in)?\\b",
+        "(?i)esp-?wroom-?32.*\\b38[\\-\\s]*p"
+      ]
+    },
+    {
+      "model_group_id": "esp32_devkit_30pin",
+      "canonical_name": "ESP32 NodeMCU Development Board (30-Pin)",
+      "component_type": "microcontroller_board",
+      "match_patterns": [
+        "(?i)\\besp32\\b.*\\b30[\\-\\s]*p(?:in)?\\b",
+        "(?i)esp32.*devkit[\\-\\s]*v1"
+      ]
+    },
+    {
+      "model_group_id": "esp32_cam_ov2640",
+      "canonical_name": "ESP32-CAM WiFi Module with OV2640 Camera",
+      "component_type": "microcontroller_board",
+      "match_patterns": [
+        "(?i)\\besp32[\\-\\s]*cam\\b"
+      ]
+    },
+    {
+      "model_group_id": "nodemcu_esp8266_v3",
+      "canonical_name": "NodeMCU V3 ESP8266 Development Board (CH340)",
+      "component_type": "microcontroller_board",
+      "match_patterns": [
+        "(?i)\\bnodemcu\\b.*\\bv3\\b",
+        "(?i)esp8266.*nodemcu.*ch340"
+      ]
+    },
+    {
+      "model_group_id": "nodemcu_esp8266_v2",
+      "canonical_name": "NodeMCU V2 ESP8266 Development Board (CP2102)",
+      "component_type": "microcontroller_board",
+      "match_patterns": [
+        "(?i)\\bnodemcu\\b.*\\bv2\\b",
+        "(?i)esp8266.*nodemcu.*cp2102"
+      ]
+    },
+    {
+      "model_group_id": "wemos_d1_mini",
+      "canonical_name": "WeMos D1 Mini ESP8266 Board",
+      "component_type": "microcontroller_board",
+      "match_patterns": [
+        "(?i)\\bwemos\\b.*\\bd1\\b.*\\bmini\\b"
+      ]
+    },
+    {
+      "model_group_id": "arduino_uno_r3",
+      "canonical_name": "Arduino Uno R3 Board",
+      "component_type": "microcontroller_board",
+      "match_patterns": [
+        "(?i)\\buno\\b.*\\br3\\b"
+      ]
+    },
+    {
+      "model_group_id": "arduino_mega_2560",
+      "canonical_name": "Arduino Mega 2560 R3 Board",
+      "component_type": "microcontroller_board",
+      "match_patterns": [
+        "(?i)\\bmega\\b.*\\b2560\\b"
+      ]
+    },
+    {
+      "model_group_id": "arduino_nano_v3",
+      "canonical_name": "Arduino Nano V3.0 Board",
+      "component_type": "microcontroller_board",
+      "match_patterns": [
+        "(?i)\\bnano\\b.*\\bv3\\b"
+      ]
+    },
+    {
+      "model_group_id": "raspberry_pi_4_8gb",
+      "canonical_name": "Raspberry Pi 4 Model B (8GB)",
+      "component_type": "microcontroller_board",
+      "match_patterns": [
+        "(?i)raspberry\\s+pi\\s+4\\b.*\\b8gb\\b"
+      ]
+    },
+    {
+      "model_group_id": "raspberry_pi_4_4gb",
+      "canonical_name": "Raspberry Pi 4 Model B (4GB)",
+      "component_type": "microcontroller_board",
+      "match_patterns": [
+        "(?i)raspberry\\s+pi\\s+4\\b.*\\b4gb\\b"
+      ]
+    },
+    {
+      "model_group_id": "raspberry_pi_5_8gb",
+      "canonical_name": "Raspberry Pi 5 Model B (8GB)",
+      "component_type": "microcontroller_board",
+      "match_patterns": [
+        "(?i)raspberry\\s+pi\\s+5\\b.*\\b8gb\\b"
+      ]
+    },
+    {
+      "model_group_id": "raspberry_pi_pico",
+      "canonical_name": "Raspberry Pi Pico",
+      "component_type": "microcontroller_board",
+      "match_patterns": [
+        "(?i)raspberry\\s+pi\\s+pico\\b(?![\\-\\s]*w\\b)"
+      ]
+    },
+    {
+      "model_group_id": "raspberry_pi_pico_w",
+      "canonical_name": "Raspberry Pi Pico W",
+      "component_type": "microcontroller_board",
+      "match_patterns": [
+        "(?i)raspberry\\s+pi\\s+pico[\\-\\s]*w\\b"
+      ]
+    },
+    {
+      "model_group_id": "stm32_blue_pill",
+      "canonical_name": "STM32 Blue Pill Board (STM32F103C8T6)",
+      "component_type": "microcontroller_board",
+      "match_patterns": [
+        "(?i)stm32f103c8t6",
+        "(?i)stm32.*blue\\s*pill"
+      ]
+    },
+    {
+      "model_group_id": "ssd1306_oled_096_i2c",
+      "canonical_name": "0.96 inch I2C OLED Display Module",
+      "component_type": "display_module",
+      "match_patterns": [
+        "(?i)0\\.96.*oled.*i2c",
+        "(?i)oled.*0\\.96.*128x64"
+      ]
+    },
+    {
+      "model_group_id": "lcd_1602_i2c",
+      "canonical_name": "16x2 LCD Display with I2C Module",
+      "component_type": "display_module",
+      "match_patterns": [
+        "(?i)1602.*lcd.*i2c",
+        "(?i)lcd.*16x2.*i2c"
+      ]
+    },
+    {
+      "model_group_id": "l298n_motor_driver",
+      "canonical_name": "L298N Dual H-Bridge Motor Driver Module",
+      "component_type": "motor_driver",
+      "match_patterns": [
+        "(?i)l298n\\b.*\\bmotor\\b"
+      ]
+    },
+    {
+      "model_group_id": "a4988_stepper_driver",
+      "canonical_name": "A4988 Stepper Motor Driver Module",
+      "component_type": "motor_driver",
+      "match_patterns": [
+        "(?i)\\ba4988\\b.*\\bstepper\\b"
+      ]
+    },
+    {
+      "model_group_id": "hc_sr04_ultrasonic",
+      "canonical_name": "HC-SR04 Ultrasonic Distance Sensor",
+      "component_type": "sensor_module",
+      "match_patterns": [
+        "(?i)hc[\\-_]?sr04"
+      ]
+    },
+    {
+      "model_group_id": "dht11_sensor",
+      "canonical_name": "DHT11 Temperature & Humidity Sensor",
+      "component_type": "sensor_module",
+      "match_patterns": [
+        "(?i)\\bdht[\\-_]?11\\b"
+      ]
+    },
+    {
+      "model_group_id": "dht22_sensor",
+      "canonical_name": "DHT22 Temperature & Humidity Sensor",
+      "component_type": "sensor_module",
+      "match_patterns": [
+        "(?i)\\bdht[\\-_]?22\\b",
+        "(?i)\\bam2302\\b"
+      ]
+    },
+    {
+      "model_group_id": "mpu6050_imu",
+      "canonical_name": "MPU6050 6-DOF Gyroscope & Accelerometer Module",
+      "component_type": "sensor_module",
+      "match_patterns": [
+        "(?i)mpu[\\-_]?6050",
+        "(?i)gy[\\-_]?521"
+      ]
+    },
+    {
+      "model_group_id": "sensor_mq2_gas",
+      "canonical_name": "MQ-2 Gas & Smoke Sensor Module",
+      "component_type": "sensor_module",
+      "match_patterns": [
+        "(?i)\\bmq[\\-\\s]*2\\b"
+      ]
+    },
+    {
+      "model_group_id": "sensor_mq3_alcohol",
+      "canonical_name": "MQ-3 Alcohol Gas Sensor Module",
+      "component_type": "sensor_module",
+      "match_patterns": [
+        "(?i)\\bmq[\\-\\s]*3\\b"
+      ]
+    },
+    {
+      "model_group_id": "sensor_mq4_methane",
+      "canonical_name": "MQ-4 Methane / CNG Gas Sensor Module",
+      "component_type": "sensor_module",
+      "match_patterns": [
+        "(?i)\\bmq[\\-\\s]*4\\b"
+      ]
+    },
+    {
+      "model_group_id": "sensor_mq7_co",
+      "canonical_name": "MQ-7 Carbon Monoxide (CO) Sensor Module",
+      "component_type": "sensor_module",
+      "match_patterns": [
+        "(?i)\\bmq[\\-\\s]*7\\b"
+      ]
+    },
+    {
+      "model_group_id": "sensor_mq135_air_quality",
+      "canonical_name": "MQ-135 Air Quality / Hazardous Gas Sensor Module",
+      "component_type": "sensor_module",
+      "match_patterns": [
+        "(?i)\\bmq[\\-\\s]*135\\b"
+      ]
+    },
+    {
+      "model_group_id": "sensor_hcsr501_pir",
+      "canonical_name": "HC-SR501 PIR Motion Sensor Module",
+      "component_type": "sensor_module",
+      "match_patterns": [
+        "(?i)\\bhc[\\-\\s]*sr501\\b",
+        "(?i)pir\\s+motion\\s+sensor(?!.*\\bmini\\b)"
+      ]
+    },
+    {
+      "model_group_id": "sensor_soil_moisture",
+      "canonical_name": "Soil Moisture Sensor Module",
+      "component_type": "sensor_module",
+      "match_patterns": [
+        "(?i)soil\\s+moisture\\s+sensor",
+        "(?i)soil\\s+hygrometer"
+      ]
+    },
+    {
+      "model_group_id": "sensor_raindrop",
+      "canonical_name": "Raindrop Detection Sensor Module",
+      "component_type": "sensor_module",
+      "match_patterns": [
+        "(?i)rain[\\s\\-]*drop\\s+sensor",
+        "(?i)rain\\s+water\\s+sensor"
+      ]
+    },
+    {
+      "model_group_id": "sensor_flame",
+      "canonical_name": "Flame / Fire Detection Sensor Module",
+      "component_type": "sensor_module",
+      "match_patterns": [
+        "(?i)flame\\s+sensor",
+        "(?i)fire\\s+detection\\s+module"
+      ]
+    },
+    {
+      "model_group_id": "sensor_sound_lm393",
+      "canonical_name": "Sound Detection Sensor Module (LM393)",
+      "component_type": "sensor_module",
+      "match_patterns": [
+        "(?i)sound\\s+sensor",
+        "(?i)microphone\\s+sensor(?!.*\\bmax9814\\b)"
+      ]
+    },
+    {
+      "model_group_id": "sensor_ttp223_touch",
+      "canonical_name": "TTP223 Capacitive Touch Sensor Module",
+      "component_type": "sensor_module",
+      "match_patterns": [
+        "(?i)\\bttp[\\-\\s]*223b?\\b",
+        "(?i)capacitive\\s+touch\\s+sensor"
+      ]
+    },
+    {
+      "model_group_id": "sensor_hx711_loadcell",
+      "canonical_name": "HX711 Load Cell Amplifier Module",
+      "component_type": "sensor_module",
+      "match_patterns": [
+        "(?i)\\bhx[\\-\\s]*711\\b"
+      ]
+    },
+    {
+      "model_group_id": "sensor_ds18b20",
+      "canonical_name": "DS18B20 Digital Temperature Sensor",
+      "component_type": "sensor_module",
+      "match_patterns": [
+        "(?i)\\bds[\\-\\s]*18b20\\b"
+      ]
+    },
+    {
+      "model_group_id": "sensor_lm35",
+      "canonical_name": "LM35 Analog Temperature Sensor",
+      "component_type": "sensor_module",
+      "match_patterns": [
+        "(?i)\\blm[\\-\\s]*35\\b(?!.*\\blm358\\b)"
+      ]
+    },
+    {
+      "model_group_id": "sensor_rfid_rc522",
+      "canonical_name": "RC522 RFID Reader/Writer Module",
+      "component_type": "sensor_module",
+      "match_patterns": [
+        "(?i)\\brc[\\-\\s]*522\\b",
+        "(?i)mfrc[\\-\\s]*522\\b"
+      ]
+    },
+    {
+      "model_group_id": "sensor_bmp180_280",
+      "canonical_name": "BMP180 / BMP280 Barometric Pressure Sensor",
+      "component_type": "sensor_module",
+      "match_patterns": [
+        "(?i)\\bbmp[\\-\\s]*[12]80\\b",
+        "(?i)\\bbme[\\-\\s]*280\\b"
+      ]
+    },
+    {
+      "model_group_id": "sensor_water_level",
+      "canonical_name": "Water Level / Depth Sensor Module",
+      "component_type": "sensor_module",
+      "match_patterns": [
+        "(?i)water\\s+level\\s+sensor(?!.*\\bfloat\\b)"
+      ]
+    },
+    {
+      "model_group_id": "power_tp4056_charger",
+      "canonical_name": "TP4056 1A Lithium Battery Charger Module",
+      "component_type": "power_module",
+      "match_patterns": [
+        "(?i)\\btp[\\-\\s]*4056\\b"
+      ]
+    },
+    {
+      "model_group_id": "power_lm2596_buck",
+      "canonical_name": "LM2596 3A DC-DC Step-Down Buck Converter",
+      "component_type": "power_module",
+      "match_patterns": [
+        "(?i)\\blm[\\-\\s]*2596\\b"
+      ]
+    },
+    {
+      "model_group_id": "power_xl4015_buck",
+      "canonical_name": "XL4015 5A DC-DC Step-Down Buck Converter",
+      "component_type": "power_module",
+      "match_patterns": [
+        "(?i)\\bxl[\\-\\s]*4015\\b"
+      ]
+    },
+    {
+      "model_group_id": "power_xl6009_boost",
+      "canonical_name": "XL6009 DC-DC Step-Up Boost Converter",
+      "component_type": "power_module",
+      "match_patterns": [
+        "(?i)\\bxl[\\-\\s]*6009\\b"
+      ]
+    },
+    {
+      "model_group_id": "power_mt3608_boost",
+      "canonical_name": "MT3608 2A DC-DC Step-Up Boost Converter",
+      "component_type": "power_module",
+      "match_patterns": [
+        "(?i)\\bmt[\\-\\s]*3608\\b"
+      ]
+    },
+    {
+      "model_group_id": "power_ams1117_3v3",
+      "canonical_name": "AMS1117 3.3V Step-Down Voltage Regulator Module",
+      "component_type": "power_module",
+      "match_patterns": [
+        "(?i)\\bams[\\-\\s]*1117.*3\\.3v\\b",
+        "(?i)\\bams[\\-\\s]*1117.*3v3\\b"
+      ]
+    },
+    {
+      "model_group_id": "power_ams1117_5v",
+      "canonical_name": "AMS1117 5.0V Step-Down Voltage Regulator Module",
+      "component_type": "power_module",
+      "match_patterns": [
+        "(?i)\\bams[\\-\\s]*1117.*5\\.?0?v\\b"
+      ]
+    },
+    {
+      "model_group_id": "power_7805_regulator",
+      "canonical_name": "L7805 / 7805 5V Linear Voltage Regulator",
+      "component_type": "power_module",
+      "match_patterns": [
+        "(?i)\\b(?:l|lm)?7805\\b"
+      ]
+    },
+    {
+      "model_group_id": "battery_18650_cell",
+      "canonical_name": "18650 3.7V Li-ion Rechargeable Battery Cell",
+      "component_type": "power_module",
+      "match_patterns": [
+        "(?i)\\b18650\\b.*\\bbattery\\b(?![\\s\\w]*(?:holder|case|box|shield|charger))"
+      ]
+    },
+    {
+      "model_group_id": "hardware_18650_holder",
+      "canonical_name": "18650 Battery Holder / Case",
+      "component_type": "hardware_enclosure",
+      "match_patterns": [
+        "(?i)\\b18650\\b.*\\b(?:holder|case|box|shield|bracket)\\b"
+      ]
+    },
+    {
+      "model_group_id": "relay_1_channel_5v",
+      "canonical_name": "1-Channel 5V Relay Module",
+      "component_type": "power_module",
+      "match_patterns": [
+        "(?i)\\b1[\\-\\s]*channel\\b.*\\b5v\\b.*\\brelay\\b",
+        "(?i)\\brelay\\s+module\\b.*\\b1[\\-\\s]*channel\\b.*\\b5v\\b"
+      ]
+    },
+    {
+      "model_group_id": "relay_2_channel_5v",
+      "canonical_name": "2-Channel 5V Relay Module",
+      "component_type": "power_module",
+      "match_patterns": [
+        "(?i)\\b2[\\-\\s]*channel\\b.*\\b5v\\b.*\\brelay\\b",
+        "(?i)\\brelay\\s+module\\b.*\\b2[\\-\\s]*channel\\b.*\\b5v\\b"
+      ]
+    },
+    {
+      "model_group_id": "relay_4_channel_5v",
+      "canonical_name": "4-Channel 5V Relay Module",
+      "component_type": "power_module",
+      "match_patterns": [
+        "(?i)\\b4[\\-\\s]*channel\\b.*\\b5v\\b.*\\brelay\\b",
+        "(?i)\\brelay\\s+module\\b.*\\b4[\\-\\s]*channel\\b.*\\b5v\\b"
+      ]
+    },
+    {
+      "model_group_id": "relay_8_channel_5v",
+      "canonical_name": "8-Channel 5V Relay Module",
+      "component_type": "power_module",
+      "match_patterns": [
+        "(?i)\\b8[\\-\\s]*channel\\b.*\\b5v\\b.*\\brelay\\b",
+        "(?i)\\brelay\\s+module\\b.*\\b8[\\-\\s]*channel\\b.*\\b5v\\b"
+      ]
+    },
+    {
+      "model_group_id": "motor_tt_gear",
+      "canonical_name": "TT Gear Motor (BO Motor) Dual Shaft",
+      "component_type": "actuator_motor",
+      "match_patterns": [
+        "(?i)\\btt\\s+gear\\s+motor\\b",
+        "(?i)\\bbo\\s+motor\\b",
+        "(?i)\\btt\\s+motor\\b"
+      ]
+    },
+    {
+      "model_group_id": "motor_n20_micro",
+      "canonical_name": "N20 Micro Metal Gear Motor",
+      "component_type": "actuator_motor",
+      "match_patterns": [
+        "(?i)\\bn20\\b.*\\bmotor\\b"
+      ]
+    },
+    {
+      "model_group_id": "motor_775_dc",
+      "canonical_name": "775 High-Speed DC Motor",
+      "component_type": "actuator_motor",
+      "match_patterns": [
+        "(?i)\\b775\\b.*\\bmotor\\b"
+      ]
+    },
+    {
+      "model_group_id": "motor_nema_17",
+      "canonical_name": "NEMA 17 Stepper Motor",
+      "component_type": "actuator_motor",
+      "match_patterns": [
+        "(?i)\\bnema[\\-\\s]*17\\b",
+        "(?i)\\b17hs\\d{4}\\b"
+      ]
+    },
+    {
+      "model_group_id": "motor_28byj48",
+      "canonical_name": "28BYJ-48 5V Stepper Motor",
+      "component_type": "actuator_motor",
+      "match_patterns": [
+        "(?i)\\b28byj[\\-\\s]*48\\b"
+      ]
+    },
+    {
+      "model_group_id": "pump_submersible_mini",
+      "canonical_name": "Mini Submersible Water Pump (3V-6V / 12V)",
+      "component_type": "actuator_motor",
+      "match_patterns": [
+        "(?i)submersible\\b.*\\bpump\\b",
+        "(?i)micro\\b.*\\bwater\\s+pump\\b"
+      ]
+    },
+    {
+      "model_group_id": "driver_uln2003",
+      "canonical_name": "ULN2003 Stepper Motor Driver Module",
+      "component_type": "motor_driver",
+      "match_patterns": [
+        "(?i)\\buln[\\-\\s]*2003\\b"
+      ]
+    },
+    {
+      "model_group_id": "driver_drv8825",
+      "canonical_name": "DRV8825 Stepper Motor Driver Module",
+      "component_type": "motor_driver",
+      "match_patterns": [
+        "(?i)\\bdrv[\\-\\s]*8825\\b"
+      ]
+    },
+    {
+      "model_group_id": "driver_tb6600",
+      "canonical_name": "TB6600 Stepper Motor Driver",
+      "component_type": "motor_driver",
+      "match_patterns": [
+        "(?i)\\btb[\\-\\s]*6600\\b"
+      ]
+    },
+    {
+      "model_group_id": "driver_l293d_shield",
+      "canonical_name": "L293D Motor Driver Shield",
+      "component_type": "motor_driver",
+      "match_patterns": [
+        "(?i)\\bl293d\\b.*\\bshield\\b"
+      ]
+    },
+    {
+      "model_group_id": "display_lcd_2004",
+      "canonical_name": "20x4 Character LCD Display (2004A)",
+      "component_type": "display_module",
+      "match_patterns": [
+        "(?i)\\b20x4\\b.*\\blcd\\b",
+        "(?i)\\b2004a?\\b.*\\blcd\\b"
+      ]
+    },
+    {
+      "model_group_id": "display_lcd_1602_std",
+      "canonical_name": "16x2 Character LCD Display (Without I2C)",
+      "component_type": "display_module",
+      "match_patterns": [
+        "(?i)\\b16x2\\b.*\\blcd\\b(?!.*\\bi2c\\b)",
+        "(?i)\\b1602a?\\b.*\\blcd\\b(?!.*\\bi2c\\b)"
+      ]
+    },
+    {
+      "model_group_id": "display_max7219_matrix",
+      "canonical_name": "MAX7219 8x8 Dot Matrix LED Display Module",
+      "component_type": "display_module",
+      "match_patterns": [
+        "(?i)\\bmax[\\-\\s]*7219\\b.*\\bmatrix\\b",
+        "(?i)\\bdot\\s+matrix\\b.*\\bmax[\\-\\s]*7219\\b"
+      ]
+    },
+    {
+      "model_group_id": "display_tm1637",
+      "canonical_name": "TM1637 4-Digit 7-Segment Display Module",
+      "component_type": "display_module",
+      "match_patterns": [
+        "(?i)\\btm[\\-\\s]*1637\\b"
+      ]
+    },
+    {
+      "model_group_id": "display_ili9341_tft",
+      "canonical_name": "ILI9341 SPI TFT LCD Touch Display (2.4/2.8/3.2 inch)",
+      "component_type": "display_module",
+      "match_patterns": [
+        "(?i)\\bili[\\-\\s]*9341\\b",
+        "(?i)tft.*\\b(?:2\\.4|2\\.8|3\\.2)\\s*inch\\b"
+      ]
+    },
+    {
+      "model_group_id": "comms_nrf24l01",
+      "canonical_name": "NRF24L01+ 2.4GHz Wireless Transceiver Module",
+      "component_type": "accessory_expansion",
+      "match_patterns": [
+        "(?i)\\bnrf[\\-\\s]*24l01\\+?\\b"
+      ]
+    },
+    {
+      "model_group_id": "comms_sim800l",
+      "canonical_name": "SIM800L GSM/GPRS Module",
+      "component_type": "accessory_expansion",
+      "match_patterns": [
+        "(?i)\\bsim[\\-\\s]*800l?\\b"
+      ]
+    },
+    {
+      "model_group_id": "comms_sim900a",
+      "canonical_name": "SIM900A GSM/GPRS Module",
+      "component_type": "accessory_expansion",
+      "match_patterns": [
+        "(?i)\\bsim[\\-\\s]*900a?\\b"
+      ]
+    },
+    {
+      "model_group_id": "comms_rf433_kit",
+      "canonical_name": "433MHz RF Transmitter & Receiver Kit",
+      "component_type": "accessory_expansion",
+      "match_patterns": [
+        "(?i)\\b433\\s*mhz\\b.*\\b(?:transmitter|receiver)\\b"
+      ]
+    },
+    {
+      "model_group_id": "comms_hc06_bluetooth",
+      "canonical_name": "HC-06 Bluetooth Module (Slave)",
+      "component_type": "accessory_expansion",
+      "match_patterns": [
+        "(?i)\\bhc[\\-\\s]*06\\b"
+      ]
+    },
+    {
+      "model_group_id": "arduino_pro_mini",
+      "canonical_name": "Arduino Pro Mini Board",
+      "component_type": "microcontroller_board",
+      "match_patterns": [
+        "(?i)\\bpro[\\-\\s]*mini\\b"
+      ]
+    },
+    {
+      "model_group_id": "arduino_leonardo",
+      "canonical_name": "Arduino Leonardo Board",
+      "component_type": "microcontroller_board",
+      "match_patterns": [
+        "(?i)\\bleonardo\\b"
+      ]
+    },
+    {
+      "model_group_id": "arduino_due",
+      "canonical_name": "Arduino Due Board",
+      "component_type": "microcontroller_board",
+      "match_patterns": [
+        "(?i)\\bdue\\b(?![\\-\\s]*date)"
+      ]
+    },
+    {
+      "model_group_id": "esp8266_esp01",
+      "canonical_name": "ESP-01 / ESP-01S WiFi Module",
+      "component_type": "microcontroller_board",
+      "match_patterns": [
+        "(?i)\\besp[\\-\\s]*01s?\\b"
+      ]
+    },
+    {
+      "model_group_id": "esp8266_esp12",
+      "canonical_name": "ESP-12E / ESP-12F WiFi Module",
+      "component_type": "microcontroller_chip",
+      "match_patterns": [
+        "(?i)\\besp[\\-\\s]*12[ef]\\b"
+      ]
+    },
+    {
+      "model_group_id": "attiny85_mcu",
+      "canonical_name": "ATtiny85 Microcontroller / Digispark",
+      "component_type": "microcontroller_board",
+      "match_patterns": [
+        "(?i)\\battiny[\\-\\s]*85\\b",
+        "(?i)\\bdigispark\\b"
+      ]
+    },
+    {
+      "model_group_id": "cnc_shield_v3",
+      "canonical_name": "CNC Shield V3 for Arduino",
+      "component_type": "accessory_expansion",
+      "match_patterns": [
+        "(?i)\\bcnc\\s*shield\\b(?:.*\\bv3\\b)?"
+      ]
+    },
+    {
+      "model_group_id": "ramps_14_board",
+      "canonical_name": "RAMPS 1.4 3D Printer Board",
+      "component_type": "accessory_expansion",
+      "match_patterns": [
+        "(?i)\\bramps[\\-\\s]*1\\.4\\b"
+      ]
+    },
+    {
+      "model_group_id": "audio_pam8403",
+      "canonical_name": "PAM8403 5V 3W Mini Audio Amplifier",
+      "component_type": "accessory_expansion",
+      "match_patterns": [
+        "(?i)\\bpam[\\-\\s]*8403\\b"
+      ]
+    },
+    {
+      "model_group_id": "audio_tpa3116d2",
+      "canonical_name": "TPA3116D2 Class D Amplifier Board",
+      "component_type": "accessory_expansion",
+      "match_patterns": [
+        "(?i)\\btpa[\\-\\s]*3116(?:d2)?\\b"
+      ]
+    },
+    {
+      "model_group_id": "audio_dfplayer_mini",
+      "canonical_name": "DFPlayer Mini MP3 Player Module",
+      "component_type": "accessory_expansion",
+      "match_patterns": [
+        "(?i)\\bdfplayer\\b"
+      ]
+    },
+    {
+      "model_group_id": "audio_bt_receiver",
+      "canonical_name": "Bluetooth 5.0 Audio Receiver Board",
+      "component_type": "accessory_expansion",
+      "match_patterns": [
+        "(?i)\\bxy[\\-\\s]*bt[\\-\\s]*mini\\b",
+        "(?i)\\bvhm[\\-\\s]*314\\b",
+        "(?i)bluetooth.*audio\\s*receiver"
+      ]
+    },
+    {
+      "model_group_id": "ic_ne555",
+      "canonical_name": "NE555 Precision Timer IC",
+      "component_type": "integrated_circuit",
+      "match_patterns": [
+        "(?i)\\bne[\\-\\s]*555\\b"
+      ]
+    },
+    {
+      "model_group_id": "ic_lm358",
+      "canonical_name": "LM358 Dual Operational Amplifier IC",
+      "component_type": "integrated_circuit",
+      "match_patterns": [
+        "(?i)\\blm[\\-\\s]*358\\b"
+      ]
+    },
+    {
+      "model_group_id": "ic_74hc595",
+      "canonical_name": "74HC595 8-Bit Shift Register IC",
+      "component_type": "integrated_circuit",
+      "match_patterns": [
+        "(?i)\\b74hc595\\b"
+      ]
+    },
+    {
+      "model_group_id": "ic_cd4017",
+      "canonical_name": "CD4017 Decade Counter IC",
+      "component_type": "integrated_circuit",
+      "match_patterns": [
+        "(?i)\\bcd[\\-\\s]*4017\\b"
+      ]
+    },
+    {
+      "model_group_id": "ic_pc817",
+      "canonical_name": "PC817 Optocoupler IC",
+      "component_type": "integrated_circuit",
+      "match_patterns": [
+        "(?i)\\bpc[\\-\\s]*817\\b"
+      ]
+    },
+    {
+      "model_group_id": "ic_lm386",
+      "canonical_name": "LM386 Audio Power Amplifier IC",
+      "component_type": "integrated_circuit",
+      "match_patterns": [
+        "(?i)\\blm[\\-\\s]*386\\b"
+      ]
+    },
+    {
+      "model_group_id": "switch_tactile",
+      "canonical_name": "Tactile Push Button Switch",
+      "component_type": "electromechanical_switch",
+      "match_patterns": [
+        "(?i)\\btactile\\b.*switch",
+        "(?i)\\bpush\\s*button\\b(?!.*\\bmodule\\b)"
+      ]
+    },
+    {
+      "model_group_id": "switch_rocker",
+      "canonical_name": "Rocker Power Switch",
+      "component_type": "electromechanical_switch",
+      "match_patterns": [
+        "(?i)\\brocker\\s*switch\\b"
+      ]
+    },
+    {
+      "model_group_id": "switch_toggle",
+      "canonical_name": "Toggle Switch (MTS Series)",
+      "component_type": "electromechanical_switch",
+      "match_patterns": [
+        "(?i)\\btoggle\\s*switch\\b",
+        "(?i)\\bmts[\\-\\s]*102\\b"
+      ]
+    },
+    {
+      "model_group_id": "switch_limit",
+      "canonical_name": "Micro Limit Switch",
+      "component_type": "electromechanical_switch",
+      "match_patterns": [
+        "(?i)\\blimit\\s*switch\\b"
+      ]
+    },
+    {
+      "model_group_id": "switch_dip",
+      "canonical_name": "DIP Switch",
+      "component_type": "electromechanical_switch",
+      "match_patterns": [
+        "(?i)\\bdip\\s*switch\\b"
+      ]
+    },
+    {
+      "model_group_id": "power_solar_panel_mini",
+      "canonical_name": "Mini Solar Panel (5V/6V/12V)",
+      "component_type": "power_module",
+      "match_patterns": [
+        "(?i)\\bmini\\s*solar\\s*panel\\b",
+        "(?i)\\bsolar\\s*(?:cell|panel)\\b.*(?:5v|6v|9v|12v)"
+      ]
+    },
+    {
+      "model_group_id": "power_solar_charge_controller",
+      "canonical_name": "Solar Charge Controller (PWM/MPPT)",
+      "component_type": "power_module",
+      "match_patterns": [
+        "(?i)solar\\s*charge\\s*controller",
+        "(?i)\\bmppt\\b.*\\bsolar\\b"
+      ]
+    },
+    {
+      "model_group_id": "battery_lipo_pack",
+      "canonical_name": "LiPo Battery Pack (Drone/RC)",
+      "component_type": "power_module",
+      "match_patterns": [
+        "(?i)\\blipo\\s*battery\\b",
+        "(?i)\\blithium\\s*polymer\\b"
+      ]
+    },
+    {
+      "model_group_id": "battery_9v_heavy_duty",
+      "canonical_name": "9V Heavy Duty Battery",
+      "component_type": "power_module",
+      "match_patterns": [
+        "(?i)\\b9v\\b.*\\bbattery\\b(?![\\s\\w]*connector|clip)"
+      ]
+    },
+    {
+      "model_group_id": "tool_digital_multimeter",
+      "canonical_name": "Digital Multimeter",
+      "component_type": "tools_equipment",
+      "match_patterns": [
+        "(?i)digital\\s*multimeter",
+        "(?i)\\bdt[\\-\\s]*830b?\\b",
+        "(?i)\\bxl[\\-\\s]*830l\\b"
+      ]
+    },
+    {
+      "model_group_id": "tool_soldering_iron_60w",
+      "canonical_name": "60W Soldering Iron",
+      "component_type": "tools_equipment",
+      "match_patterns": [
+        "(?i)soldering\\s*iron.*60w",
+        "(?i)60w.*soldering\\s*iron"
+      ]
+    },
+    {
+      "model_group_id": "tool_solder_wire",
+      "canonical_name": "Solder Wire / Lead (63/37, 60/40)",
+      "component_type": "tools_equipment",
+      "match_patterns": [
+        "(?i)solder(?:ing)?\\s*(?:wire|lead)",
+        "(?i)rosin\\s*core\\s*solder"
+      ]
+    },
+    {
+      "model_group_id": "3dprint_nozzle_04mm",
+      "canonical_name": "0.4mm Brass 3D Printer Nozzle",
+      "component_type": "hardware_enclosure",
+      "match_patterns": [
+        "(?i)\\bnozzle\\b.*0\\.4",
+        "(?i)0\\.4.*\\bnozzle\\b"
+      ]
+    },
+    {
+      "model_group_id": "3dprint_gt2_belt",
+      "canonical_name": "GT2 6mm Timing Belt",
+      "component_type": "hardware_enclosure",
+      "match_patterns": [
+        "(?i)\\bgt2\\b.*\\bbelt\\b",
+        "(?i)\\btiming\\s*belt\\b.*\\bgt2\\b"
+      ]
+    }
+  ]
+}
