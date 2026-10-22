@@ -76,9 +76,6 @@
   const modalSpecsGrid = document.getElementById('modalSpecsGrid');
   const modalComparisonList = document.getElementById('modalComparisonList');
   const modalDescription = document.getElementById('modalDescription');
-  const openAiPlannerBtn = document.getElementById('openAiPlannerBtn');
-  const aiPlannerModal = document.getElementById('aiPlannerModal');
-  const closeAiPlannerModalBtn = document.getElementById('closeAiPlannerModalBtn');
 
   let debounceTimer = null;
 
@@ -834,30 +831,9 @@
       }
     });
 
-    if (openAiPlannerBtn && aiPlannerModal) {
-      openAiPlannerBtn.addEventListener('click', () => {
-        aiPlannerModal.classList.add('open');
-      });
-    }
-
-    if (closeAiPlannerModalBtn && aiPlannerModal) {
-      closeAiPlannerModalBtn.addEventListener('click', () => {
-        aiPlannerModal.classList.remove('open');
-      });
-    }
-
-    if (aiPlannerModal) {
-      aiPlannerModal.addEventListener('click', (e) => {
-        if (e.target === aiPlannerModal) {
-          aiPlannerModal.classList.remove('open');
-        }
-      });
-    }
-
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         closeModal();
-        if (aiPlannerModal) aiPlannerModal.classList.remove('open');
       }
     });
 

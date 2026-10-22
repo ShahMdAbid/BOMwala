@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BOMwala | Unified Electronics Catalog & Price Comparison</title>
+  <title>BOMwala | Unified electronics catalog in BD</title>
   <meta name="description"
     content="Discover, compare, and check stock across 21,000+ electronic components from 10 major retailers in Bangladesh. Instant sub-10ms search with categorized inventory.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,7 +12,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=3.4">
+  <link rel="stylesheet" href="style.css?v=3.7">
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%2338bdf8%22 stroke-width=%222%22><rect x=%224%22 y=%224%22 width=%2216%22 height=%2216%22 rx=%222%22/><rect x=%229%22 y=%229%22 width=%226%22 height=%226%22/><line x1=%229%22 y1=%221%22 x2=%229%22 y2=%224%22/><line x1=%2215%22 y1=%221%22 x2=%2215%22 y2=%224%22/><line x1=%229%22 y1=%2220%22 x2=%229%22 y2=%2223%22/><line x1=%2215%22 y1=%2220%22 x2=%2215%22 y2=%2223%22/></svg>">
 </head>
@@ -27,9 +27,13 @@
       </div>
 
       <div class="header-actions">
-        <button id="openAiPlannerBtn" class="ai-header-btn" title="AI Project Planner">
+        <a href="https://notebook.google.com/notebook/d41b8307-f082-48b7-936f-6663286d4853" target="_blank" rel="noopener noreferrer" class="ai-header-btn" title="Open AI Project Planner on Google NotebookLM">
           <span>AI Project Planner</span>
-        </button>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="7" y1="17" x2="17" y2="7"></line>
+            <polyline points="7 7 17 7 17 17"></polyline>
+          </svg>
+        </a>
         <button id="mobileFilterToggleBtn" class="mobile-filter-btn" aria-label="Open Filters" title="Filters">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
@@ -200,53 +204,7 @@
     </section>
   </main>
 
-  <!-- AI Project Planner & Star Modal -->
-  <div id="aiPlannerModal" class="modal-backdrop">
-    <div class="modal-card star-modal-card">
-      <div class="modal-header">
-        <h3 class="modal-title">AI Project Planner</h3>
-        <button id="closeAiPlannerModalBtn" class="modal-close-btn" title="Close">&times;</button>
-      </div>
 
-      <div class="modal-body">
-        <div class="star-callout-card">
-          <div class="star-callout-content">
-            <p class="star-callout-desc" style="font-size:0.83rem; line-height:1.55; color:var(--text-main);">
-              Imagine finalizing a design, only to find that some parts are out of stock—forcing you to repeatedly redesign around what's actually available. Worse, you buy a component only to discover later that another local shop had it significantly cheaper. Sifting through multiple store sites drains hours that should be spent building.
-            </p>
-            <p class="star-callout-desc" style="font-size:0.83rem; line-height:1.55; color:var(--text-secondary); margin-top:8px;">
-              BOMwala unifies mainstream BD electronics retailers into a single catalog and pairs it with Gemini Notebook—giving you a free AI project planner based on live, verified local stock.
-            </p>
-          </div>
-        </div>
-
-        <div class="ai-features-box">
-          <div class="ai-feature-row">
-            <span class="feature-bullet">✓</span>
-            <span>Design circuit architectures based on live, in-stock components in BD.</span>
-          </div>
-          <div class="ai-feature-row">
-            <span class="feature-bullet">✓</span>
-            <span>Compare multi-retailer pricing and identify lowest-cost alternative components in seconds.</span>
-          </div>
-          <div class="ai-feature-row">
-            <span class="feature-bullet">✓</span>
-            <span>Eliminate post-design component shortages before building your Bill of Materials (BOM).</span>
-          </div>
-        </div>
-
-        <div class="star-modal-actions">
-          <a href="https://notebook.google.com/notebook/d41b8307-f082-48b7-936f-6663286d4853" target="_blank" rel="noopener noreferrer" class="btn-launch-ai" id="launchNotebookBtn">
-            <span>Continue to Gemini Notebook</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="7" y1="17" x2="17" y2="7"></line>
-              <polyline points="7 7 17 7 17 17"></polyline>
-            </svg>
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- Component Detail & Price Comparison Modal -->
   <div id="productModal" class="modal-backdrop">
@@ -304,7 +262,7 @@
     </div>
   </div>
 
-  <script src="app.js?v=3.5"></script>
+  <script src="app.js?v=3.7"></script>
 </body>
 
 </html>
