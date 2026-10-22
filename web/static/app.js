@@ -6,9 +6,14 @@
     return Math.floor(Math.random() * 2147483647) + 1;
   }
 
-  const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? ''
-    : 'https://bomwala-api.onrender.com';
+  const SUPABASE_URL = 'https://ndlxsplfeyenlxxvznwe.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kbHhzcGxmZXllbmx4eHZ6bndlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2OTAxNzIsImV4cCI6MjEwODI2NjE3Mn0.oG8Q46GW2QS1mxQjI7avN1IMx7O3RTdDghcMIXmrA0o';
+
+  const SUPABASE_HEADERS = {
+    'apikey': SUPABASE_ANON_KEY,
+    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+    'Content-Type': 'application/json'
+  };
 
   const state = {
     q: '',
@@ -85,7 +90,11 @@
 
   async function loadStats() {
     try {
-      const res = await fetch(`${API_BASE}/api/stats`);
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_bomwala_stats`, {
+        method: 'POST',
+        headers: SUPABASE_HEADERS,
+        body: JSON.stringify({})
+      });
       const data = await res.json();
 
       const statTotalEl = document.getElementById('statTotalCount');
@@ -97,7 +106,12 @@
         statInStockEl.innerText = `${data.in_stock_count.toLocaleString()} In Stock`;
       }
 
-      if (data.stores) renderStoreFilters(data.stores);
+      if (data.stores) {
+        const storeList = Object.entries(data.stores)
+          .filter(([name]) => name !== 'TestStore')
+          .map(([name, count]) => ({ store: name, total_items: count }));
+        renderStoreFilters(storeList);
+      }
       if (data.categories) renderCategoryFilters(data.categories);
     } catch (err) {
       console.error('Failed to load stats:', err);
@@ -363,21 +377,25 @@
       </div>
     `;
 
-    const params = new URLSearchParams();
-    if (state.q.trim()) params.append('q', state.q.trim());
-    if (state.category) params.append('category', state.category);
-    if (state.subcategory) params.append('subcategory', state.subcategory);
-    if (state.stores.size > 0) params.append('stores', Array.from(state.stores).join(','));
-    if (state.inStockOnly) params.append('in_stock_only', '1');
-    if (state.minPrice !== null && state.minPrice > 0) params.append('min_price', state.minPrice);
-    if (state.maxPrice !== null && state.maxPrice > 0) params.append('max_price', state.maxPrice);
-    if (state.sort) params.append('sort', state.sort);
-    if (state.seed !== null && !state.q.trim()) params.append('seed', state.seed);
-    params.append('page', state.page);
-    params.append('limit', state.limit);
+    const payload = {
+      q: state.q.trim(),
+      store_filter: state.stores.size > 0 ? Array.from(state.stores) : null,
+      cat_filter: state.category,
+      subcat_filter: state.subcategory,
+      in_stock_only: state.inStockOnly,
+      min_price: state.minPrice && state.minPrice > 0 ? Number(state.minPrice) : null,
+      max_price: state.maxPrice && state.maxPrice > 0 ? Number(state.maxPrice) : null,
+      sort_by: state.sort || 'relevance',
+      page_num: state.page,
+      page_limit: state.limit
+    };
 
     try {
-      const res = await fetch(`${API_BASE}/api/search?${params.toString()}`);
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/search_bomwala_components`, {
+        method: 'POST',
+        headers: SUPABASE_HEADERS,
+        body: JSON.stringify(payload)
+      });
       const data = await res.json();
 
       state.totalResults = data.total;
@@ -583,10 +601,15 @@
 
   async function openComponentModal(id) {
     try {
-      const res = await fetch(`${API_BASE}/api/component/${id}`);
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_bomwala_component_detail`, {
+        method: 'POST',
+        headers: SUPABASE_HEADERS,
+        body: JSON.stringify({ comp_id: Number(id) })
+      });
       const data = await res.json();
+      if (!data || !data.component) return;
       const comp = data.component;
-      const comps = data.comparisons || [];
+      const comps = data.cross_store_matches || data.comparisons || [];
 
       modalStoreBadge.innerText = comp.store;
       modalTitle.innerText = comp.name;
@@ -611,7 +634,7 @@
         modalStockBadge.innerHTML = `<span class="stock-pulse-dot"></span>Out of Stock`;
       }
 
-      const specs = comp.specifications || {};
+      const specs = comp.specifications || comp.specifications_json || {};
       const specKeys = Object.keys(specs);
       if (specKeys.length > 0) {
         let specsHtml = '';
