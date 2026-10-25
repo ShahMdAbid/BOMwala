@@ -262,3 +262,4 @@ async def run_scraper(limit=None, concurrency=10):
 if __name__ == "__main__":
     test_limit = int(sys.argv[1]) if len(sys.argv) > 1 else None
     asyncio.run(run_scraper(limit=test_limit))
+

@@ -26,3 +26,10 @@ scrapers/logs/
 # OS Specific
 .DS_Store
 Thumbs.db
+
+# Firebase cache
+.firebase/
+
+# Temporary / imported scrapers
+scrapers_from_kaibridge/
+

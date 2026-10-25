@@ -201,3 +201,4 @@ def generate_store_catalogs():
 
 if __name__ == "__main__":
     generate_store_catalogs()
+

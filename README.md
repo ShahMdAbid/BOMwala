@@ -1,11 +1,21 @@
 # BOMwala
-A local parts aggregator and search tool for electronics hobbyists and engineers in Bangladesh, live at [bomwala.netlify.app](https://bomwala.netlify.app).
+A local parts aggregator and search tool for electronics hobbyists and engineers in Bangladesh, live at [bomwala.web.app](https://bomwala.web.app).
 
-BOMwala indexes inventory across mainstream BD electronics retailers into a unified catalog and pairs it with Google NotebookLM for planning circuits against live, verified local stock.
+<blockquote>
+<p>Designing around unavailable hardware kills momentum. You finalize a schematic, then find some parts don't exist in the local BD market—or went out of stock last week. Back to the drawing board. Checking ten fragmented store websites just to compare prices and stock wastes hours that belong in the lab.</p>
+
+<p>Sometimes the problem is the opposite: you spend days building a custom driver circuit, then notice a ৳90 module on some random BD shop that does the exact same thing. <strong>Why reinvent the wheel?</strong></p>
+
+<p>And sometimes you're just stuck—no idea where to start, no sense of what's even buildable with what's locally available. <strong>Hard to design around parts you don't know exist.</strong></p>
+
+<p><strong>BOMwala</strong> unifies mainstream BD electronics retailers into a single catalog and pairs it with Gemini Notebook—giving you a free AI project planner based on live, verified local stock.</p>
+</blockquote>
 
 **Last scraped:** October 22, 2026. Catalogs are re-scraped weekly.
 
 ---
+
+
 
 ## AI Hardware Planner
 

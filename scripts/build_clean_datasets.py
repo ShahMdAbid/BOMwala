@@ -496,3 +496,4 @@ with open(readme_path, "w", encoding="utf-8") as f:
 
 print("ALL FILES GENERATED SUCCESSFULLY IN website&AI!")
 print(f"Total: {stats['total']}, In Stock: {stats['in_stock']}, Out of Stock: {stats['out_of_stock']}")
+

@@ -27,10 +27,18 @@
     seed: getRandomSeed(), // Dynamically generated random seed on every page load/refresh
     page: 1,
     limit: 35,
-    viewMode: 'table', // 'table' | 'grid'
+    viewMode: 'grid', // 'table' | 'grid'
     totalResults: 0,
-    totalPages: 1
+    totalPages: 1,
+    activePartId: null,
+    lastScrollY: 0,
+    currentPartCategory: null,
+    currentPartStore: null
   };
+
+  // Fast in-memory caches for 0ms instant navigation
+  const componentDetailCache = new Map();
+  const catalogItemCache = new Map();
 
   const FALLBACK_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='1.5'%3E%3Crect x='3' y='3' width='18' height='18' rx='3'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpolyline points='21 15 16 10 5 21'/%3E%3C/svg%3E";
   const EXT_LINK_ICON = `<svg class="ext-arrow-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
@@ -44,7 +52,9 @@
     return `৳ ${formatted}`;
   }
 
-  // DOM Elements
+  // DOM Elements - Catalog
+  const searchHeroSection = document.getElementById('searchHeroSection');
+  const catalogMainLayout = document.getElementById('catalogMainLayout');
   const searchInput = document.getElementById('searchInput');
   const clearSearchBtn = document.getElementById('clearSearchBtn');
   const inStockToggle = document.getElementById('inStockToggle');
@@ -65,24 +75,56 @@
   const pageInfoText = document.getElementById('pageInfoText');
   const brandHomeBtn = document.getElementById('brandHomeBtn');
 
-  // Modal Elements
-  const productModal = document.getElementById('productModal');
-  const closeModalBtn = document.getElementById('closeModalBtn');
-  const modalStoreBadge = document.getElementById('modalStoreBadge');
-  const modalTitle = document.getElementById('modalTitle');
-  const modalPrice = document.getElementById('modalPrice');
-  const modalStockBadge = document.getElementById('modalStockBadge');
-  const modalBuyLink = document.getElementById('modalBuyLink');
-  const modalSpecsGrid = document.getElementById('modalSpecsGrid');
-  const modalComparisonList = document.getElementById('modalComparisonList');
-  const modalDescription = document.getElementById('modalDescription');
+  // DOM Elements - Dedicated Product Page (?part=id)
+  const productDetailPage = document.getElementById('productDetailPage');
+  const productPageLoading = document.getElementById('productPageLoading');
+  const productPageContent = document.getElementById('productPageContent');
+  const backToCatalogBtn = document.getElementById('backToCatalogBtn');
+  const crumbHomeBtn = document.getElementById('crumbHomeBtn');
+  const crumbSepCat = document.getElementById('crumbSepCat');
+  const crumbCategory = document.getElementById('crumbCategory');
+  const crumbStore = document.getElementById('crumbStore');
+  const sharePartBtn = document.getElementById('sharePartBtn');
+  const sharePartBtnText = document.getElementById('sharePartBtnText');
+  const pageStoreBadge = document.getElementById('pageStoreBadge');
+  const pageStockBadge = document.getElementById('pageStockBadge');
+  const pageCategoryBadge = document.getElementById('pageCategoryBadge');
+  const pagePartIdBadge = document.getElementById('pagePartIdBadge');
+  const pageImage = document.getElementById('pageImage');
+  const pageTitle = document.getElementById('pageTitle');
+  const pagePrice = document.getElementById('pagePrice');
+  const pageBuyLink = document.getElementById('pageBuyLink');
+  const pageDescription = document.getElementById('pageDescription');
+  const pageSpecsGrid = document.getElementById('pageSpecsGrid');
+  const pageComparisonList = document.getElementById('pageComparisonList');
+  const pageFeaturesBox = document.getElementById('pageFeaturesBox');
+  const pageFeaturesList = document.getElementById('pageFeaturesList');
+  const pagePackageBox = document.getElementById('pagePackageBox');
+  const pagePackageList = document.getElementById('pagePackageList');
 
   let debounceTimer = null;
 
   async function init() {
     setupEventListeners();
-    await loadStats();
-    await triggerSearch();
+
+    const initialParams = new URLSearchParams(window.location.search);
+    const initialPartId = initialParams.get('part');
+    if (initialPartId) {
+      // Priority #1: Immediately render the requested component page
+      showComponentPage(initialPartId, false);
+      // Run stats in background non-blocking
+      loadStats();
+      // Defer catalog pre-fetch to give 100% network bandwidth to component data
+      setTimeout(() => {
+        if (!state.activePartId || state.totalResults === 0) {
+          triggerSearch();
+        }
+      }, 1200);
+    } else {
+      // Run stats and catalog search in parallel
+      loadStats();
+      await triggerSearch();
+    }
   }
 
   async function loadStats() {
@@ -449,6 +491,11 @@
       return;
     }
 
+    // Cache all items in memory for 0ms instant page loads
+    items.forEach(item => {
+      catalogItemCache.set(Number(item.id), item);
+    });
+
     if (state.viewMode === 'table') {
       renderTableView(items);
     } else {
@@ -485,7 +532,7 @@
           </td>
           <td>
             <div class="product-info-wrap">
-              <span class="product-title-text" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
+              <a href="?part=${item.id}" class="product-title-text component-link" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</a>
               <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
                 <span class="store-chip">${escapeHtml(item.store)}</span>
                 <span style="font-size:0.75rem; color:var(--text-muted);">${escapeHtml(item.category || '')} &rsaquo; ${escapeHtml(item.subcategory || '')}</span>
@@ -529,9 +576,17 @@
     `;
 
     productsContainer.querySelectorAll('tbody tr').forEach(row => {
-      row.addEventListener('click', () => {
+      row.addEventListener('click', (e) => {
+        if (e.target.closest('a.btn-store-link')) return;
         const id = row.dataset.id;
-        if (id) openComponentModal(id);
+        if (id) {
+          if (e.ctrlKey || e.metaKey || e.button === 1) {
+            window.open(`?part=${id}`, '_blank');
+          } else {
+            e.preventDefault();
+            showComponentPage(id, true);
+          }
+        }
       });
     });
   }
@@ -540,9 +595,9 @@
     let cardsHtml = '';
     items.forEach(item => {
       const inStock = item.is_in_stock === 1;
-      const stockBadge = inStock
-        ? `<span class="stock-badge-ui in-stock"><span class="stock-pulse-dot"></span>In Stock</span>`
-        : `<span class="stock-badge-ui out-of-stock"><span class="stock-pulse-dot"></span>Out of Stock</span>`;
+      const stockDot = inStock
+        ? `<span class="card-stock-dot in-stock" title="In Stock"><span class="stock-pulse-dot"></span></span>`
+        : `<span class="card-stock-dot out-of-stock" title="Out of Stock"><span class="stock-pulse-dot"></span></span>`;
 
       const imgSrc = item.image_url && item.image_url.startsWith('http') ? item.image_url : FALLBACK_IMG;
       const isRfq = !item.price_bdt || item.price_bdt <= 0;
@@ -564,9 +619,11 @@
           <div class="card-body">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
               <span class="store-chip">${escapeHtml(item.store)}</span>
-              ${stockBadge}
+              ${stockDot}
             </div>
-            <h4 class="card-title" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</h4>
+            <h4 class="card-title" title="${escapeHtml(item.name)}">
+              <a href="?part=${item.id}" class="component-link">${escapeHtml(item.name)}</a>
+            </h4>
             <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">${escapeHtml(item.category || '')}</div>
             <div class="card-footer">
               <div class="card-price">${priceDisplay}</div>
@@ -584,9 +641,17 @@
     productsContainer.innerHTML = `<div class="products-grid">${cardsHtml}</div>`;
 
     productsContainer.querySelectorAll('.product-card').forEach(card => {
-      card.addEventListener('click', () => {
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('a.btn-store-link')) return;
         const id = card.dataset.id;
-        if (id) openComponentModal(id);
+        if (id) {
+          if (e.ctrlKey || e.metaKey || e.button === 1) {
+            window.open(`?part=${id}`, '_blank');
+          } else {
+            e.preventDefault();
+            showComponentPage(id, true);
+          }
+        }
       });
     });
   }
@@ -597,97 +662,502 @@
     nextPageBtn.disabled = state.page >= state.totalPages;
   }
 
-  async function openComponentModal(id) {
+  function parseProductContent(compName, rawDesc, rawSpecs) {
+    const specs = {};
+
+    // 1. Ingest and sanitize rawSpecs (from specifications_json or specifications)
+    if (rawSpecs) {
+      let parsed = rawSpecs;
+      if (typeof rawSpecs === 'string') {
+        try {
+          parsed = JSON.parse(rawSpecs);
+        } catch (e) {
+          parsed = null;
+        }
+      }
+      if (parsed && typeof parsed === 'object') {
+        for (const [k, v] of Object.entries(parsed)) {
+          if (k && v !== undefined && v !== null) {
+            let kClean = String(k).trim().replace(/^[0-9]+[.,)]\s*/, '');
+            let vClean = String(v).trim().replace(/\n[0-9]+$/, '').replace(/\r?\n/g, ' ').trim();
+            const lowerK = kClean.toLowerCase();
+            if (kClean.length >= 2 && vClean.length > 0 && !['footprint', 'http', 'https'].includes(lowerK)) {
+              specs[kClean] = vClean;
+            }
+          }
+        }
+      }
+    }
+
+    if (!rawDesc || typeof rawDesc !== 'string') {
+      return { specs, descriptionParagraphs: [], features: [], packages: [] };
+    }
+
+    // Normalize text & clean non-breaking spaces
+    const cleanRaw = rawDesc
+      .replace(/&nbsp;/g, ' ')
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n');
+
+    let rawLines = cleanRaw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+    // Filter trailing noise words like 'Login', 'Register'
+    if (rawLines.length > 0) {
+      const lastLine = rawLines[rawLines.length - 1].toLowerCase();
+      if (['login', 'register', 'cart', 'checkout'].includes(lastLine)) {
+        rawLines.pop();
+      }
+    }
+
+    // Deduplicate repeated block halves (e.g. ZerOneTechBD where lines 0..N are duplicated as N..2N)
+    const totalLines = rawLines.length;
+    if (totalLines >= 6 && totalLines % 2 === 0) {
+      const half = totalLines / 2;
+      const firstHalf = rawLines.slice(0, half).join('|||');
+      const secondHalf = rawLines.slice(half).join('|||');
+      if (firstHalf === secondHalf) {
+        rawLines = rawLines.slice(0, half);
+      }
+    } else if (totalLines >= 10) {
+      const half = Math.floor(totalLines / 2);
+      let matchCount = 0;
+      for (let j = 0; j < half; j++) {
+        if (rawLines[j] === rawLines[half + j]) matchCount++;
+      }
+      if (matchCount >= half * 0.8) {
+        rawLines = rawLines.slice(0, half);
+      }
+    }
+
+    // Filter consecutive duplicate lines
+    const dedupedLines = [];
+    for (const line of rawLines) {
+      if (dedupedLines.length === 0 || dedupedLines[dedupedLines.length - 1] !== line) {
+        dedupedLines.push(line);
+      }
+    }
+
+    // Filter video scraper noise and raw URLs
+    const filteredLines = [];
+    let skipVideoNoise = false;
+    for (const l of dedupedLines) {
+      const lower = l.toLowerCase();
+      if (lower === 'videos' || lower === 'video') {
+        skipVideoNoise = true;
+        continue;
+      }
+      if (skipVideoNoise) {
+        if (['no', 'found', 'no video found'].includes(lower)) {
+          continue;
+        } else {
+          skipVideoNoise = false;
+        }
+      }
+
+      if (lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('more details:')) {
+        continue;
+      }
+      filteredLines.push(l);
+    }
+
+    const SECTION_HEADER_RE = /^(?:[^\w\s]*\s*)?(?:(?:Product|Technical|Key|Item|Detailed|General)\s+)?(Description|Specifications?|Specs?|Features?|Overview|Package(?:\s+Includes?|\s+List|\s+Contents?)?|Details|Trustworthiness & Safety Disclaimer):?$/i;
+
+    let currentSection = 'main';
+    const descParagraphs = [];
+    const features = [];
+    const packages = [];
+    const lowerCompName = compName ? compName.toLowerCase() : '';
+
+    for (let i = 0; i < filteredLines.length; i++) {
+      const line = filteredLines[i];
+      const lowerLine = line.toLowerCase();
+
+      // Skip redundant component name header at line 0 or 1
+      if (i < 2 && (lowerLine === lowerCompName || lowerLine === `description of ${lowerCompName}`)) {
+        continue;
+      }
+
+      const secMatch = line.match(SECTION_HEADER_RE);
+      if (secMatch) {
+        const header = secMatch[1].toLowerCase();
+        if (header.includes('spec')) currentSection = 'specs';
+        else if (header.includes('feat')) currentSection = 'features';
+        else if (header.includes('pack')) currentSection = 'package';
+        else if (header.includes('detail')) currentSection = 'specs';
+        else if (header.includes('disclaimer')) currentSection = 'disclaimer';
+        else if (header.includes('desc') || header.includes('over')) currentSection = 'desc';
+        else currentSection = 'other';
+        continue;
+      }
+
+      if (currentSection === 'disclaimer' || currentSection === 'other') {
+        continue;
+      }
+
+      // Check for Key: Value on same line (e.g. "1,Temperature Range: 80℃~420℃" or "Interface: Type-C" or "1. Working voltage: 9-20V")
+      const kvMatch = line.match(/^(?:[-*•]|\d+[.,)])?\s*([A-Za-z0-9\s/_\-().]{2,45})\s*[:=]\s*(.+)$/);
+      if (kvMatch) {
+        let key = kvMatch[1].trim().replace(/^[0-9]+[.,)]\s*/, '');
+        const val = kvMatch[2].trim();
+        const lowerKey = key.toLowerCase();
+        if (!['note', 'notes', 'description', 'features', 'specifications', 'package', 'price', 'faq', 'package includes', 'item', 'warning'].includes(lowerKey)) {
+          if (!specs[key]) {
+            specs[key] = val;
+          }
+          continue;
+        }
+      }
+
+      // Check for Package item
+      if (currentSection === 'package' || /^\d+\s*[*x]\s*.+/.test(line)) {
+        const pkgItem = line.replace(/^[-*•]\s*/, '').trim();
+        if (pkgItem.length > 0) {
+          packages.push(pkgItem);
+        }
+        continue;
+      }
+
+      // Check for Feature bullet
+      if (currentSection === 'features' || /^(?:[-*•]|\d+\.)\s+.+/.test(line)) {
+        const featItem = line.replace(/^(?:[-*•]|\d+[.)])\s*/, '').trim();
+        if (featItem.length > 0) {
+          features.push(featItem);
+        }
+        continue;
+      }
+
+      // Normal prose paragraph
+      if (line.length > 10) {
+        const cleanP = line.replace(/^(?:Product\s+)?Description:\s*/i, '').trim();
+        if (cleanP.length > 0) {
+          descParagraphs.push(cleanP);
+        }
+      }
+    }
+
+    return { specs, descriptionParagraphs: descParagraphs, features, packages };
+  }
+
+  function renderComponentDetail(comp, comps = []) {
+    // Update Page Title & Breadcrumbs
+    document.title = `${comp.name} | BOMwala`;
+    state.currentPartCategory = comp.category || null;
+    state.currentPartStore = comp.store || null;
+
+    if (crumbCategory) {
+      if (comp.category) {
+        crumbCategory.innerText = comp.category;
+        crumbCategory.style.display = 'inline-flex';
+        crumbCategory.title = `View all ${comp.category} in Catalog`;
+        if (crumbSepCat) crumbSepCat.style.display = 'inline';
+      } else {
+        crumbCategory.style.display = 'none';
+        if (crumbSepCat) crumbSepCat.style.display = 'none';
+      }
+    }
+    if (crumbStore) {
+      crumbStore.innerText = comp.store || 'Retailer';
+      crumbStore.title = `View all products from ${comp.store} in Catalog`;
+    }
+
+    // Display Large Product Image with smooth skeleton shimmer
+    if (pageImage) {
+      const detailImgSrc = comp.image_url && comp.image_url.startsWith('http') ? comp.image_url : FALLBACK_IMG;
+      const box = pageImage.closest('.product-hero-image-box');
+      if (box) box.classList.add('skeleton-shimmer');
+      pageImage.classList.remove('img-loaded');
+
+      pageImage.onload = function () {
+        this.classList.add('img-loaded');
+        if (box) box.classList.remove('skeleton-shimmer');
+      };
+      pageImage.onerror = function () {
+        this.onerror = null;
+        this.src = FALLBACK_IMG;
+        this.classList.add('img-loaded');
+        if (box) box.classList.remove('skeleton-shimmer');
+      };
+      pageImage.src = detailImgSrc;
+      pageImage.alt = comp.name || 'Component Image';
+    }
+
+    if (pageStoreBadge) pageStoreBadge.innerText = comp.store;
+    if (pageTitle) pageTitle.innerText = comp.name;
+    if (pageBuyLink) pageBuyLink.href = comp.product_url;
+    if (pagePartIdBadge) pagePartIdBadge.innerText = `Part #${comp.id}`;
+
+    if (pageCategoryBadge) {
+      if (comp.category) {
+        pageCategoryBadge.innerText = comp.category;
+        pageCategoryBadge.style.display = 'inline-block';
+      } else {
+        pageCategoryBadge.style.display = 'none';
+      }
+    }
+
+    const isRfq = !comp.price_bdt || comp.price_bdt <= 0;
+    if (isRfq) {
+      if (pagePrice) pagePrice.innerHTML = `<span class="price-rfq-pill" style="font-size:1.1rem; padding:6px 14px;">Price on Request (RFQ)</span>`;
+      if (pageBuyLink) {
+        pageBuyLink.innerHTML = `<span>Request Quote on ${escapeHtml(comp.store)}</span> ${EXT_LINK_ICON}`;
+        pageBuyLink.title = `Request quote from ${escapeHtml(comp.store)} (opens in new tab)`;
+      }
+    } else {
+      if (pagePrice) pagePrice.innerText = formatBDT(comp.price_bdt);
+      if (pageBuyLink) {
+        pageBuyLink.innerHTML = `<span>Buy on ${escapeHtml(comp.store)}</span> ${EXT_LINK_ICON}`;
+        pageBuyLink.title = `Open product on ${escapeHtml(comp.store)} (opens in new tab)`;
+      }
+    }
+
+    if (pageStockBadge) {
+      if (comp.is_in_stock) {
+        pageStockBadge.className = 'stock-badge-ui in-stock';
+        pageStockBadge.innerHTML = `<span class="stock-pulse-dot"></span>In Stock`;
+      } else {
+        pageStockBadge.className = 'stock-badge-ui out-of-stock';
+        pageStockBadge.innerHTML = `<span class="stock-pulse-dot"></span>Out of Stock`;
+      }
+    }
+
+    // Parse product content heuristically into structured specs, clean description, features, packages
+    const parsedContent = parseProductContent(
+      comp.name,
+      comp.description,
+      comp.specifications || comp.specifications_json
+    );
+
+    // Render Technical Specifications Grid
+    const specEntries = Object.entries(parsedContent.specs);
+    if (pageSpecsGrid) {
+      if (specEntries.length > 0) {
+        let specsHtml = '';
+        specEntries.forEach(([k, v], idx) => {
+          const rowClass = idx % 2 === 0 ? 'spec-row even' : 'spec-row odd';
+          specsHtml += `
+            <div class="${rowClass}">
+              <span class="spec-key">${escapeHtml(k)}</span>
+              <span class="spec-val">${escapeHtml(v)}</span>
+            </div>
+          `;
+        });
+        pageSpecsGrid.innerHTML = specsHtml;
+      } else {
+        pageSpecsGrid.innerHTML = `<div style="color:var(--text-muted); font-size:0.82rem; padding:16px; text-align:center;">No explicit technical specifications listed by retailer.</div>`;
+      }
+    }
+
+    // Render Clean Description Paragraphs
+    if (pageDescription) {
+      if (parsedContent.descriptionParagraphs.length > 0) {
+        pageDescription.innerHTML = parsedContent.descriptionParagraphs
+          .map(p => `<p class="product-desc-paragraph">${escapeHtml(p)}</p>`)
+          .join('');
+      } else {
+        pageDescription.innerHTML = `<p class="product-desc-paragraph" style="color:var(--text-muted);">No detailed prose description provided by retailer.</p>`;
+      }
+    }
+
+    // Render Key Features
+    if (pageFeaturesBox && pageFeaturesList) {
+      if (parsedContent.features.length > 0) {
+        pageFeaturesList.innerHTML = parsedContent.features
+          .map(f => `<li><span class="list-bullet-dot"></span><span>${escapeHtml(f)}</span></li>`)
+          .join('');
+        pageFeaturesBox.style.display = 'block';
+      } else {
+        pageFeaturesBox.style.display = 'none';
+      }
+    }
+
+    // Render Package Includes
+    if (pagePackageBox && pagePackageList) {
+      if (parsedContent.packages.length > 0) {
+        pagePackageList.innerHTML = parsedContent.packages
+          .map(p => `<li><span class="package-bullet-dot"></span><span>${escapeHtml(p)}</span></li>`)
+          .join('');
+        pagePackageBox.style.display = 'block';
+      } else {
+        pagePackageBox.style.display = 'none';
+      }
+    }
+
+    renderComparisons(comps);
+  }
+
+  function renderComparisons(comps) {
+    if (!pageComparisonList) return;
+    if (comps && comps.length > 0) {
+      let compHtml = '';
+      comps.forEach(c => {
+        catalogItemCache.set(Number(c.id), c);
+        const compPrice = c.price_bdt > 0 ? formatBDT(c.price_bdt) : 'RFQ';
+        const stockColor = c.is_in_stock ? 'var(--stock-green)' : 'var(--stock-red)';
+        const stockTxt = c.is_in_stock ? 'In Stock' : 'Out of Stock';
+
+        compHtml += `
+          <div class="comparison-row">
+            <div class="comparison-left-block">
+              <span class="store-chip">${escapeHtml(c.store)}</span>
+              <a href="?part=${c.id}" class="comparison-name-link" data-part-id="${c.id}" title="${escapeHtml(c.name)}">
+                ${escapeHtml(c.name)}
+              </a>
+            </div>
+            <div class="comparison-right-block">
+              <span style="font-size:0.75rem; color:${stockColor}; font-weight:600;">${stockTxt}</span>
+              <span style="font-family:var(--font-display); font-weight:700; color:#38bdf8; font-size:0.9rem;">${compPrice}</span>
+              <a href="${c.product_url}" target="_blank" rel="noopener noreferrer" class="btn-store-link"
+                title="Open on ${escapeHtml(c.store)} (opens in new tab)">
+                <span>Visit</span>
+                ${EXT_LINK_ICON}
+              </a>
+            </div>
+          </div>
+        `;
+      });
+      pageComparisonList.innerHTML = compHtml;
+
+      pageComparisonList.querySelectorAll('[data-part-id]').forEach(link => {
+        link.addEventListener('click', (e) => {
+          if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) {
+            e.preventDefault();
+            showComponentPage(link.dataset.partId, true);
+          }
+        });
+      });
+    } else {
+      pageComparisonList.innerHTML = `
+        <div class="comparison-empty-card">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span>No similar products found from other verified BD retailers.</span>
+        </div>
+      `;
+    }
+  }
+
+  async function showComponentPage(id, pushState = true) {
+    if (!id) return;
+    const numericId = Number(id);
+    if (isNaN(numericId)) return;
+
+    if (!state.activePartId) {
+      state.lastScrollY = window.scrollY || window.pageYOffset || 0;
+    }
+    state.activePartId = numericId;
+
+    if (pushState) {
+      const url = new URL(window.location);
+      url.searchParams.set('part', numericId);
+      history.pushState({ partId: numericId }, '', url.toString());
+    }
+
+    // Switch views: hide catalog, show dedicated product detail page
+    if (searchHeroSection) searchHeroSection.style.display = 'none';
+    if (catalogMainLayout) catalogMainLayout.style.display = 'none';
+    if (productDetailPage) productDetailPage.style.display = 'block';
+
+    window.scrollTo({ top: 0, behavior: 'instant' });
+
+    // 1. INSTANT ZERO-LATENCY CACHE HIT
+    const fullDetail = componentDetailCache.get(numericId);
+    if (fullDetail) {
+      if (productPageLoading) productPageLoading.style.display = 'none';
+      if (productPageContent) productPageContent.style.display = 'block';
+      renderComponentDetail(fullDetail.component, fullDetail.cross_store_matches || fullDetail.comparisons || []);
+      return;
+    }
+
+    // 2. OPTIMISTIC CATALOG ITEM RENDERING: If user clicked from grid/table, render immediately at 0ms!
+    const catalogItem = catalogItemCache.get(numericId);
+    if (catalogItem) {
+      if (productPageLoading) productPageLoading.style.display = 'none';
+      if (productPageContent) productPageContent.style.display = 'block';
+      renderComponentDetail(catalogItem, []);
+      if (pageComparisonList) {
+        pageComparisonList.innerHTML = `
+          <div style="padding:14px; text-align:center; color:var(--text-muted); font-size:0.78rem;">
+            Searching other retailers for similar products...
+          </div>
+        `;
+      }
+    } else {
+      // Direct cold URL visit: display loading indicator while fetching
+      if (productPageLoading) productPageLoading.style.display = 'flex';
+      if (productPageContent) productPageContent.style.display = 'none';
+    }
+
+    // 3. Fetch full component details + cross-store matches in background
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_bomwala_component_detail`, {
         method: 'POST',
         headers: SUPABASE_HEADERS,
-        body: JSON.stringify({ comp_id: Number(id) })
+        body: JSON.stringify({ comp_id: numericId })
       });
       const data = await res.json();
-      if (!data || !data.component) return;
-      const comp = data.component;
-      const comps = data.cross_store_matches || data.comparisons || [];
-
-      modalStoreBadge.innerText = comp.store;
-      modalTitle.innerText = comp.name;
-      modalBuyLink.href = comp.product_url;
-
-      const isRfq = !comp.price_bdt || comp.price_bdt <= 0;
-      if (isRfq) {
-        modalPrice.innerHTML = `<span class="price-rfq-pill" style="font-size:0.85rem; padding:4px 10px;">Price on Request (RFQ)</span>`;
-        modalBuyLink.innerHTML = `<span>Request Quote</span> ${EXT_LINK_ICON}`;
-        modalBuyLink.title = `Request quote from ${escapeHtml(comp.store)} (opens in new tab)`;
-      } else {
-        modalPrice.innerText = formatBDT(comp.price_bdt);
-        modalBuyLink.innerHTML = `<span>Buy on ${escapeHtml(comp.store)}</span> ${EXT_LINK_ICON}`;
-        modalBuyLink.title = `Open product on ${escapeHtml(comp.store)} (opens in new tab)`;
-      }
-
-      if (comp.is_in_stock) {
-        modalStockBadge.className = 'stock-badge-ui in-stock';
-        modalStockBadge.innerHTML = `<span class="stock-pulse-dot"></span>In Stock`;
-      } else {
-        modalStockBadge.className = 'stock-badge-ui out-of-stock';
-        modalStockBadge.innerHTML = `<span class="stock-pulse-dot"></span>Out of Stock`;
-      }
-
-      const specs = comp.specifications || comp.specifications_json || {};
-      const specKeys = Object.keys(specs);
-      if (specKeys.length > 0) {
-        let specsHtml = '';
-        specKeys.forEach(k => {
-          specsHtml += `
-            <div class="spec-row">
-              <span class="spec-key">${escapeHtml(k)}</span>
-              <span class="spec-val">${escapeHtml(specs[k])}</span>
+      if (!data || !data.component) {
+        if (!catalogItem && productPageLoading) {
+          productPageLoading.innerHTML = `
+            <div style="text-align:center; padding:30px;">
+              <h3 style="color:#ef4444; margin-bottom:8px;">Component Not Found</h3>
+              <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:16px;">This component could not be found in active inventory.</p>
+              <button id="errorReturnBtn" class="btn-back-catalog">Return to Catalog</button>
             </div>
           `;
-        });
-        modalSpecsGrid.innerHTML = specsHtml;
-      } else {
-        modalSpecsGrid.innerHTML = `<div style="grid-column:span 2; color:var(--text-muted); font-size:0.8rem;">No explicit technical specifications listed by retailer.</div>`;
+          const errBtn = document.getElementById('errorReturnBtn');
+          if (errBtn) errBtn.addEventListener('click', () => closeComponentPage(true));
+        }
+        return;
       }
 
-      if (comps.length > 0) {
-        let compHtml = '';
-        comps.forEach(c => {
-          const compPrice = c.price_bdt > 0 ? formatBDT(c.price_bdt) : 'RFQ';
-          const stockColor = c.is_in_stock ? 'var(--stock-green)' : 'var(--stock-red)';
-          const stockTxt = c.is_in_stock ? 'In Stock' : 'Out of Stock';
+      // Store in caches
+      componentDetailCache.set(numericId, data);
+      catalogItemCache.set(numericId, data.component);
 
-          compHtml += `
-            <div class="comparison-row">
-              <div style="display:flex; align-items:center; gap:8px;">
-                <span class="store-chip">${escapeHtml(c.store)}</span>
-                <span style="font-size:0.82rem; color:var(--text-main); font-weight:500;">${escapeHtml(c.name)}</span>
-              </div>
-              <div style="display:flex; align-items:center; gap:12px;">
-                <span style="font-size:0.75rem; color:${stockColor}; font-weight:600;">${stockTxt}</span>
-                <span style="font-family:var(--font-display); font-weight:700; color:#38bdf8; font-size:0.88rem;">${compPrice}</span>
-                <a href="${c.product_url}" target="_blank" rel="noopener noreferrer" class="btn-store-link btn-store-link-sm"
-                  title="Open on ${escapeHtml(c.store)} (opens in new tab)">
-                  <span>Visit</span>
-                  ${EXT_LINK_ICON}
-                </a>
-              </div>
-            </div>
-          `;
-        });
-        modalComparisonList.innerHTML = compHtml;
-      } else {
-        modalComparisonList.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem;">No other retailer offers the exact identical verified component.</div>`;
-      }
+      // Render full data seamlessly
+      renderComponentDetail(data.component, data.cross_store_matches || data.comparisons || []);
 
-      modalDescription.innerText = comp.description ? comp.description : 'No detailed product description available.';
-      productModal.classList.add('open');
+      if (productPageLoading) productPageLoading.style.display = 'none';
+      if (productPageContent) productPageContent.style.display = 'block';
+
     } catch (err) {
-      console.error('Failed to open component modal:', err);
+      console.error('Failed to load component details:', err);
+      if (!catalogItem && productPageLoading) {
+        productPageLoading.innerHTML = `
+          <div style="text-align:center; padding:30px;">
+            <p style="color:#ef4444; font-size:0.9rem; margin-bottom:12px;">Failed to load component data.</p>
+            <button id="catchReturnBtn" class="btn-back-catalog">Back to Catalog</button>
+          </div>
+        `;
+        const catchBtn = document.getElementById('catchReturnBtn');
+        if (catchBtn) catchBtn.addEventListener('click', () => closeComponentPage(true));
+      }
     }
   }
 
-  function closeModal() {
-    productModal.classList.remove('open');
+  function closeComponentPage(pushState = true) {
+    state.activePartId = null;
+
+    if (pushState) {
+      const url = new URL(window.location);
+      url.searchParams.delete('part');
+      history.pushState({}, '', url.pathname + (url.search ? url.search : ''));
+    }
+
+    // Switch views back to catalog
+    if (productDetailPage) productDetailPage.style.display = 'none';
+    if (searchHeroSection) searchHeroSection.style.display = '';
+    if (catalogMainLayout) catalogMainLayout.style.display = '';
+
+    document.title = 'BOMwala | Unified electronics catalog in BD';
+
+    // Restore scroll position
+    if (state.lastScrollY) {
+      window.scrollTo({ top: state.lastScrollY, behavior: 'instant' });
+    }
   }
 
   function openMobileFilters() {
@@ -713,6 +1183,12 @@
     if (state.stores.size > 0) count += state.stores.size;
     if (state.minPrice !== null || state.maxPrice !== null) count++;
     if (!state.inStockOnly) count++;
+    if (state.q && state.q.trim()) count++;
+
+    const resetBtn = document.getElementById('resetFiltersBtn');
+    if (resetBtn) {
+      resetBtn.style.display = count > 0 ? 'inline-block' : 'none';
+    }
 
     const badge = document.getElementById('mobileFilterBadge');
     if (badge) {
@@ -763,7 +1239,9 @@
         searchInput.focus();
       }
       if (e.key === 'Escape') {
-        closeModal();
+        if (state.activePartId) {
+          closeComponentPage(true);
+        }
         closeMobileFilters();
       }
     });
@@ -824,23 +1302,106 @@
       }
     });
 
-    closeModalBtn.addEventListener('click', closeModal);
-    productModal.addEventListener('click', (e) => {
-      if (e.target === productModal) {
-        closeModal();
+    function navigateToCatalogFilter(category = null, store = null) {
+      closeComponentPage(true);
+      if (category) {
+        state.category = category;
+        state.subcategory = null;
+        updateActiveCategoryUI();
+      }
+      if (store) {
+        state.stores.clear();
+        state.stores.add(store);
+        if (storesChecklist) {
+          storesChecklist.querySelectorAll('input[type="checkbox"]').forEach(input => {
+            input.checked = (input.value === store);
+          });
+        }
+      }
+      state.page = 1;
+      updateFilterBadges();
+      triggerSearch();
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+
+    if (backToCatalogBtn) {
+      backToCatalogBtn.addEventListener('click', () => closeComponentPage(true));
+    }
+    if (crumbHomeBtn) {
+      crumbHomeBtn.addEventListener('click', () => closeComponentPage(true));
+    }
+    if (crumbCategory) {
+      crumbCategory.addEventListener('click', () => {
+        if (state.currentPartCategory) {
+          navigateToCatalogFilter(state.currentPartCategory, null);
+        }
+      });
+    }
+    if (crumbStore) {
+      crumbStore.addEventListener('click', () => {
+        if (state.currentPartStore) {
+          navigateToCatalogFilter(null, state.currentPartStore);
+        }
+      });
+    }
+    if (pageCategoryBadge) {
+      pageCategoryBadge.addEventListener('click', () => {
+        if (state.currentPartCategory) {
+          navigateToCatalogFilter(state.currentPartCategory, null);
+        }
+      });
+    }
+    if (pageStoreBadge) {
+      pageStoreBadge.addEventListener('click', () => {
+        if (state.currentPartStore) {
+          navigateToCatalogFilter(null, state.currentPartStore);
+        }
+      });
+    }
+
+    if (sharePartBtn) {
+      sharePartBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(window.location.href);
+          const originalText = sharePartBtnText ? sharePartBtnText.innerText : 'Share Link';
+          if (sharePartBtnText) sharePartBtnText.innerText = 'Link Copied!';
+          sharePartBtn.style.background = 'rgba(34, 197, 94, 0.15)';
+          sharePartBtn.style.borderColor = 'var(--stock-green)';
+          sharePartBtn.style.color = 'var(--stock-green)';
+          setTimeout(() => {
+            if (sharePartBtnText) sharePartBtnText.innerText = originalText;
+            sharePartBtn.style.background = '';
+            sharePartBtn.style.borderColor = '';
+            sharePartBtn.style.color = '';
+          }, 2000);
+        } catch (err) {
+          console.error('Failed to copy share link:', err);
+        }
+      });
+    }
+
+    window.addEventListener('popstate', () => {
+      const params = new URLSearchParams(window.location.search);
+      const partId = params.get('part');
+      if (partId) {
+        showComponentPage(partId, false);
+      } else {
+        closeComponentPage(false);
       }
     });
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        closeModal();
+    brandHomeBtn.addEventListener('click', () => {
+      if (state.activePartId) {
+        closeComponentPage(true);
       }
+      resetAllFilters();
     });
-
-    brandHomeBtn.addEventListener('click', resetAllFilters);
   }
 
   function resetAllFilters() {
+    if (state.activePartId) {
+      closeComponentPage(true);
+    }
     state.q = '';
     searchInput.value = '';
     clearSearchBtn.style.display = 'none';

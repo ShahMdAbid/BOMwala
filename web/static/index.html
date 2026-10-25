@@ -12,9 +12,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=3.7">
-  <link rel="icon"
-    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%2338bdf8%22 stroke-width=%222%22><rect x=%224%22 y=%224%22 width=%2216%22 height=%2216%22 rx=%222%22/><rect x=%229%22 y=%229%22 width=%226%22 height=%226%22/><line x1=%229%22 y1=%221%22 x2=%229%22 y2=%224%22/><line x1=%2215%22 y1=%221%22 x2=%2215%22 y2=%224%22/><line x1=%229%22 y1=%2220%22 x2=%229%22 y2=%2223%22/><line x1=%2215%22 y1=%2220%22 x2=%2215%22 y2=%2223%22/></svg>">
+  <link rel="stylesheet" href="style.css?v=5.0">
+  <link rel="icon" href="data:,">
 </head>
 
 <body>
@@ -36,9 +35,16 @@
         </a>
         <button id="mobileFilterToggleBtn" class="mobile-filter-btn" aria-label="Open Filters" title="Filters">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
           </svg>
-          <span>Filters</span>
           <span id="mobileFilterBadge" class="filter-badge" style="display:none;">0</span>
         </button>
       </div>
@@ -46,7 +52,7 @@
   </header>
 
   <!-- Global Search Area - Lean & Crisp -->
-  <section class="search-hero">
+  <section class="search-hero" id="searchHeroSection">
     <div class="search-box-wrapper">
       <div class="search-icon-box">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
@@ -72,7 +78,7 @@
   </section>
 
   <!-- App Main Layout -->
-  <main class="app-layout">
+  <main class="app-layout" id="catalogMainLayout">
 
     <!-- Mobile Filter Drawer Backdrop -->
     <div id="sidebarBackdrop" class="sidebar-backdrop" title="Close Filters"></div>
@@ -81,13 +87,21 @@
     <aside class="sidebar-root" id="sidebarFilters">
       <div class="sidebar-header">
         <div class="sidebar-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
           </svg>
           <span>Filters</span>
         </div>
         <div class="sidebar-header-actions">
-          <button id="resetFiltersBtn" class="sidebar-reset-btn" title="Reset all filters">Reset</button>
+          <button id="resetFiltersBtn" class="sidebar-reset-btn" title="Reset all filters" style="display:none;">Reset</button>
           <button id="closeSidebarBtn" class="sidebar-close-btn" aria-label="Close Filters" title="Close">&times;</button>
         </div>
       </div>
@@ -165,7 +179,7 @@
           </select>
 
           <div class="view-toggle-group">
-            <button id="viewTableBtn" class="view-btn active" title="Table View">
+            <button id="viewTableBtn" class="view-btn" title="Table View">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="8" y1="6" x2="21" y2="6"></line>
                 <line x1="8" y1="12" x2="21" y2="12"></line>
@@ -176,7 +190,7 @@
               </svg>
               Table
             </button>
-            <button id="viewGridBtn" class="view-btn" title="Card Grid View">
+            <button id="viewGridBtn" class="view-btn active" title="Card Grid View">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="3" width="7" height="7"></rect>
                 <rect x="14" y="3" width="7" height="7"></rect>
@@ -206,63 +220,151 @@
 
 
 
-  <!-- Component Detail & Price Comparison Modal -->
-  <div id="productModal" class="modal-backdrop">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span class="store-chip" id="modalStoreBadge">Store</span>
-          <span id="modalStockBadge" class="stock-badge-ui in-stock">In Stock</span>
-        </div>
-        <button id="closeModalBtn" class="modal-close-btn" title="Close Modal">&times;</button>
+  <!-- Dedicated Component Detail Page (Direct shareable view: ?part=id) -->
+  <main id="productDetailPage" class="product-page-root" style="display: none;">
+    <div class="product-page-container">
+      
+      <!-- Top Action & Breadcrumb Navigation -->
+      <div class="product-page-nav">
+        <button id="backToCatalogBtn" class="btn-back-catalog" title="Return to catalog (Esc)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span>Back</span>
+          <span class="back-shortcut-hint">Esc</span>
+        </button>
+
+        <nav class="product-breadcrumb" aria-label="Breadcrumb">
+          <button type="button" class="crumb-link" id="crumbHomeBtn" title="Return to all components in Catalog">Catalog</button>
+          <span class="crumb-sep" id="crumbSepCat">/</span>
+          <button type="button" class="crumb-link" id="crumbCategory" title="Filter catalog by this category">Electronics</button>
+          <span class="crumb-sep">/</span>
+          <button type="button" class="crumb-link crumb-current" id="crumbStore" title="Filter catalog by this retailer">TechShopBD</button>
+        </nav>
+
+        <button id="sharePartBtn" class="btn-share-part" title="Copy shareable direct link">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+          </svg>
+          <span id="sharePartBtnText">Share Link</span>
+        </button>
       </div>
 
-      <div class="modal-body">
-        <h2 id="modalTitle" class="modal-title">Component Name</h2>
-        <div class="modal-top-meta">
-          <div>
-            <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Retail Price</span>
-            <div id="modalPrice" class="modal-price-big">৳ 0</div>
-          </div>
-          <div>
-            <a id="modalBuyLink" href="#" target="_blank" rel="noopener noreferrer" class="btn-store-link"
-              style="padding:10px 18px; font-size:0.85rem; background:var(--primary); color:#030712; font-weight:700;">
-              Visit Retailer Page
-            </a>
-          </div>
-        </div>
-
-        <!-- Specifications Grid -->
-        <div>
-          <span
-            style="font-size:0.8rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.05em; display:block; margin-bottom:8px;">Specifications</span>
-          <div class="modal-spec-grid" id="modalSpecsGrid">
-            <!-- Dynamic specs -->
-          </div>
-        </div>
-
-        <!-- Cross-Store Price Comparison -->
-        <div class="cross-store-comparison-box">
-          <div class="comparison-heading">Cross-Store Price Comparison</div>
-          <div class="comparison-list" id="modalComparisonList">
-            <!-- Dynamic comparisons -->
-          </div>
-        </div>
-
-        <!-- Description -->
-        <div>
-          <span
-            style="font-size:0.8rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.05em; display:block; margin-bottom:8px;">Description</span>
-          <p id="modalDescription"
-            style="font-size:0.84rem; color:var(--text-secondary); line-height:1.6; white-space:pre-line; max-height:180px; overflow-y:auto; padding-right:8px;">
-            No description provided.
-          </p>
-        </div>
+      <!-- Loading State -->
+      <div id="productPageLoading" class="product-page-loading" style="display: none;">
+        <div class="spinner-ui"></div>
+        <p>Loading component details from verified inventory...</p>
       </div>
+
+      <!-- Product Page Content Root -->
+      <div id="productPageContent" class="product-page-content-wrapper">
+        
+        <!-- Full-Width Hero Card: Product Media + Identifiers, Title & Price Action Bar -->
+        <header class="product-hero-card">
+          <div class="product-hero-media">
+            <div class="product-hero-image-box">
+              <img id="pageImage" class="product-hero-image" src="" alt="Product Image" loading="lazy" />
+            </div>
+          </div>
+
+          <div class="product-hero-info">
+            <div class="product-badges-row">
+              <span class="store-chip store-chip-sm" id="pageStoreBadge">Store</span>
+              <span id="pageStockBadge" class="stock-badge-ui in-stock">
+                <span class="stock-pulse-dot"></span>In Stock
+              </span>
+              <span class="part-id-chip" id="pagePartIdBadge">Part #</span>
+            </div>
+
+            <h1 id="pageTitle" class="product-page-title">Component Name</h1>
+
+            <!-- Hero Action & Commercial Bar -->
+            <div class="product-action-bar">
+              <div class="price-display-box">
+                <div id="pagePrice" class="product-page-price">৳ 0</div>
+              </div>
+              <div class="action-buttons-box">
+                <a id="pageBuyLink" href="#" target="_blank" rel="noopener noreferrer" class="btn-buy-primary" title="Open product on retailer store">
+                  <span>Visit Retailer Page</span>
+                  <svg class="ext-arrow-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Balanced 2-Column Content Grid Below Hero -->
+        <div class="product-details-grid">
+          
+          <!-- Primary Column: Description, Key Features & Package List -->
+          <div class="product-col-primary">
+            
+            <!-- Description Card -->
+            <div class="product-section-card">
+              <div class="section-card-title-row">
+                <h3 class="section-card-title">Overview & Description</h3>
+              </div>
+              <div id="pageDescription" class="product-desc-container">
+                No description provided.
+              </div>
+            </div>
+
+            <!-- Key Features Card -->
+            <div id="pageFeaturesBox" class="product-section-card" style="display: none;">
+              <div class="section-card-title-row">
+                <h3 class="section-card-title">Key Features & Highlights</h3>
+              </div>
+              <ul class="features-list" id="pageFeaturesList"></ul>
+            </div>
+
+            <!-- Package Contents Card -->
+            <div id="pagePackageBox" class="product-section-card" style="display: none;">
+              <div class="section-card-title-row">
+                <h3 class="section-card-title">Package Contents</h3>
+              </div>
+              <ul class="package-list" id="pagePackageList"></ul>
+            </div>
+
+          </div>
+
+          <!-- Secondary Column: Cross-Store Comparison & Technical Specs -->
+          <div class="product-col-secondary">
+            
+            <!-- Similar products from other retailers -->
+            <div class="product-section-card comparison-section-card">
+              <div class="section-card-title-row">
+                <h3 class="section-card-title">Similar products from other retailers</h3>
+                <span class="live-tag">BD Retailers</span>
+              </div>
+              <div class="comparison-list" id="pageComparisonList">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+
+            <!-- Technical Specifications -->
+            <div class="product-section-card">
+              <div class="section-card-title-row">
+                <h3 class="section-card-title">Technical Specifications</h3>
+              </div>
+              <div class="spec-table-container" id="pageSpecsContainer">
+                <div class="specs-table-ui" id="pageSpecsGrid">
+                  <!-- Dynamically populated -->
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
     </div>
-  </div>
+  </main>
 
-  <script src="app.js?v=3.7"></script>
+  <script src="app.js?v=5.0"></script>
 </body>
 
 </html>
