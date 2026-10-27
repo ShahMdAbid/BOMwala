@@ -15,6 +15,8 @@
     'Content-Type': 'application/json'
   };
 
+  const FAVORITES_STORAGE_KEY = 'bomwala_favorites_v1';
+
   const state = {
     q: '',
     category: null,
@@ -33,7 +35,8 @@
     activePartId: null,
     lastScrollY: 0,
     currentPartCategory: null,
-    currentPartStore: null
+    currentPartStore: null,
+    favorites: new Map()
   };
 
   // Fast in-memory caches for 0ms instant navigation
@@ -94,17 +97,384 @@
   const pageTitle = document.getElementById('pageTitle');
   const pagePrice = document.getElementById('pagePrice');
   const pageBuyLink = document.getElementById('pageBuyLink');
-  const pageDescription = document.getElementById('pageDescription');
-  const pageSpecsGrid = document.getElementById('pageSpecsGrid');
   const pageComparisonList = document.getElementById('pageComparisonList');
-  const pageFeaturesBox = document.getElementById('pageFeaturesBox');
-  const pageFeaturesList = document.getElementById('pageFeaturesList');
-  const pagePackageBox = document.getElementById('pagePackageBox');
-  const pagePackageList = document.getElementById('pagePackageList');
+
+  // DOM Elements - Favorites & Saved Drawer
+  const savedDrawerOpenBtn = document.getElementById('savedDrawerOpenBtn');
+  const savedCountBadge = document.getElementById('savedCountBadge');
+  const drawerTotalCountBadge = document.getElementById('drawerTotalCountBadge');
+  const savedDrawer = document.getElementById('savedDrawer');
+  const savedDrawerBackdrop = document.getElementById('savedDrawerBackdrop');
+  const savedDrawerCloseBtn = document.getElementById('savedDrawerCloseBtn');
+  const clearAllSavedBtn = document.getElementById('clearAllSavedBtn');
+  const savedDrawerList = document.getElementById('savedDrawerList');
+  const savedDrawerFooter = document.getElementById('savedDrawerFooter');
+  const savedTotalCost = document.getElementById('savedTotalCost');
+  const exportBomBtn = document.getElementById('exportBomBtn');
+  const exportBomBtnText = document.getElementById('exportBomBtnText');
+  const pageSaveBtn = document.getElementById('pageSaveBtn');
+  const pageSaveBtnText = document.getElementById('pageSaveBtnText');
+  const appToast = document.getElementById('appToast');
+  const appToastText = document.getElementById('appToastText');
 
   let debounceTimer = null;
+  let toastTimer = null;
+
+  // ==========================================================================
+  // Favorites / Saved Components System
+  // ==========================================================================
+
+  function initFavorites() {
+    try {
+      const raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
+      if (raw) {
+        const list = JSON.parse(raw);
+        if (Array.isArray(list)) {
+          list.forEach(item => {
+            if (item && item.id) {
+              state.favorites.set(Number(item.id), item);
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to parse favorites from localStorage:', e);
+    }
+    updateFavoritesBadge();
+  }
+
+  function persistFavorites() {
+    try {
+      const list = Array.from(state.favorites.values());
+      localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(list));
+    } catch (e) {
+      console.warn('Failed to persist favorites to localStorage:', e);
+    }
+    updateFavoritesBadge();
+  }
+
+  function updateFavoritesBadge() {
+    const count = state.favorites.size;
+    if (savedCountBadge) {
+      savedCountBadge.innerText = count;
+      savedCountBadge.style.display = count > 0 ? 'inline-flex' : 'none';
+      savedCountBadge.classList.remove('bump');
+      void savedCountBadge.offsetWidth;
+      if (count > 0) savedCountBadge.classList.add('bump');
+    }
+    if (drawerTotalCountBadge) {
+      drawerTotalCountBadge.innerText = count;
+      drawerTotalCountBadge.style.display = count > 0 ? 'inline-flex' : 'none';
+    }
+    if (savedDrawerOpenBtn) {
+      const heartIcon = savedDrawerOpenBtn.querySelector('.heart-icon');
+      if (heartIcon) {
+        heartIcon.setAttribute('fill', count > 0 ? '#f43f5e' : 'none');
+      }
+    }
+  }
+
+  function toggleFavorite(item) {
+    if (!item || !item.id) return;
+    const id = Number(item.id);
+    const exists = state.favorites.has(id);
+
+    if (exists) {
+      state.favorites.delete(id);
+      persistFavorites();
+      syncHeartButtons(id);
+      showToast(`Removed from favorites`);
+    } else {
+      const savedObj = {
+        id: id,
+        name: item.name || 'Component',
+        store: item.store || 'Retailer',
+        price_bdt: item.price_bdt !== undefined ? item.price_bdt : null,
+        is_in_stock: item.is_in_stock ? 1 : 0,
+        image_url: item.image_url || '',
+        product_url: item.product_url || '#',
+        category: item.category || '',
+        subcategory: item.subcategory || '',
+        saved_at: Date.now()
+      };
+      state.favorites.set(id, savedObj);
+      persistFavorites();
+      syncHeartButtons(id);
+      showToast(`Saved to favorites!`, true);
+    }
+
+    if (isSavedDrawerOpen()) {
+      renderSavedDrawer();
+    }
+  }
+
+  function removeFavorite(id) {
+    const numericId = Number(id);
+    if (!state.favorites.has(numericId)) return;
+    state.favorites.delete(numericId);
+    persistFavorites();
+    syncHeartButtons(numericId);
+    renderSavedDrawer();
+    showToast(`Removed from favorites`);
+  }
+
+  function clearAllFavorites() {
+    if (state.favorites.size === 0) return;
+    if (window.confirm('Are you sure you want to clear all saved components?')) {
+      const ids = Array.from(state.favorites.keys());
+      state.favorites.clear();
+      persistFavorites();
+      ids.forEach(id => syncHeartButtons(id));
+      renderSavedDrawer();
+      showToast('All saved components cleared');
+    }
+  }
+
+  function syncHeartButtons(targetId) {
+    const numericId = Number(targetId);
+    const isFav = state.favorites.has(numericId);
+
+    // Update all matching grid card heart buttons
+    document.querySelectorAll(`.card-fav-btn[data-fav-id="${numericId}"]`).forEach(btn => {
+      btn.classList.toggle('active', isFav);
+      btn.title = isFav ? 'Remove from favorites' : 'Add to favorites';
+      btn.setAttribute('aria-label', btn.title);
+      const svg = btn.querySelector('svg');
+      if (svg) svg.setAttribute('fill', isFav ? 'currentColor' : 'none');
+    });
+
+    // Update all matching table row heart buttons
+    document.querySelectorAll(`.table-fav-btn[data-fav-id="${numericId}"]`).forEach(btn => {
+      btn.classList.toggle('active', isFav);
+      btn.title = isFav ? 'Remove from favorites' : 'Add to favorites';
+      btn.setAttribute('aria-label', btn.title);
+      const svg = btn.querySelector('svg');
+      if (svg) svg.setAttribute('fill', isFav ? 'currentColor' : 'none');
+    });
+
+    // Update detail page save button if currently active
+    if (state.activePartId === numericId && pageSaveBtn) {
+      pageSaveBtn.classList.toggle('active', isFav);
+      pageSaveBtn.title = isFav ? 'Remove from favorites' : 'Save this component to favorites';
+      const svg = pageSaveBtn.querySelector('svg');
+      if (svg) svg.setAttribute('fill', isFav ? '#f43f5e' : 'none');
+      if (pageSaveBtnText) pageSaveBtnText.innerText = isFav ? 'Saved' : 'Save';
+    }
+  }
+
+  window.toggleFavoriteById = (id) => {
+    const numericId = Number(id);
+    const item = catalogItemCache.get(numericId) || state.favorites.get(numericId);
+    if (item) {
+      toggleFavorite(item);
+    }
+  };
+
+  function showToast(msg, isFavoriteAdded = false) {
+    if (!appToast || !appToastText) return;
+    appToastText.innerText = msg;
+    const heartIcon = appToast.querySelector('.toast-icon-heart');
+    if (heartIcon) {
+      heartIcon.style.display = isFavoriteAdded ? 'inline-block' : 'none';
+    }
+    appToast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      appToast.classList.remove('show');
+    }, 2200);
+  }
+
+  function isSavedDrawerOpen() {
+    return savedDrawer && savedDrawer.classList.contains('open');
+  }
+
+  function openSavedDrawer() {
+    if (savedDrawer) savedDrawer.classList.add('open');
+    if (savedDrawerBackdrop) savedDrawerBackdrop.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    renderSavedDrawer();
+  }
+
+  function closeSavedDrawer() {
+    if (savedDrawer) savedDrawer.classList.remove('open');
+    if (savedDrawerBackdrop) savedDrawerBackdrop.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  function renderSavedDrawer() {
+    if (!savedDrawerList) return;
+    const items = Array.from(state.favorites.values());
+
+    if (items.length === 0) {
+      savedDrawerList.innerHTML = `
+        <div class="saved-empty-state">
+          <div class="saved-empty-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+          </div>
+          <div class="saved-empty-title">No saved components yet</div>
+          <p class="saved-empty-desc">Click the heart icon on any component card or detail page to save it for quick BOM tracking.</p>
+        </div>
+      `;
+      if (savedDrawerFooter) savedDrawerFooter.style.display = 'none';
+      if (clearAllSavedBtn) clearAllSavedBtn.style.display = 'none';
+      return;
+    }
+
+    if (savedDrawerFooter) savedDrawerFooter.style.display = 'flex';
+    if (clearAllSavedBtn) clearAllSavedBtn.style.display = 'inline-block';
+
+    let totalEst = 0;
+    let cardsHtml = '';
+
+    // Sort by saved_at desc
+    items.sort((a, b) => (b.saved_at || 0) - (a.saved_at || 0));
+
+    items.forEach(item => {
+      const priceNum = parseFloat(item.price_bdt);
+      if (!isNaN(priceNum) && priceNum > 0) {
+        totalEst += priceNum;
+      }
+      const priceTxt = (!item.price_bdt || item.price_bdt <= 0) ? 'RFQ' : formatBDT(item.price_bdt);
+      const stockColor = item.is_in_stock ? 'var(--stock-green)' : 'var(--stock-red)';
+      const stockTxt = item.is_in_stock ? 'In Stock' : 'Out of Stock';
+      const imgSrc = item.image_url && item.image_url.startsWith('http') ? item.image_url : FALLBACK_IMG;
+
+      cardsHtml += `
+        <div class="saved-item-card" data-id="${item.id}">
+          <div class="saved-item-thumb">
+            <img src="${imgSrc}" alt="" loading="lazy"
+              onerror="this.onerror=null; this.src='${FALLBACK_IMG}';">
+          </div>
+          <div class="saved-item-info">
+            <a href="?part=${item.id}" class="saved-item-name" data-drawer-part-id="${item.id}" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</a>
+            <div class="saved-item-meta">
+              <span class="store-chip">${escapeHtml(item.store)}</span>
+              <span style="font-size:0.72rem; color:${stockColor}; font-weight:600;">${stockTxt}</span>
+            </div>
+            <div class="saved-item-price">${priceTxt}</div>
+          </div>
+          <div class="saved-item-actions">
+            <button class="saved-item-remove-btn" title="Remove from saved" aria-label="Remove" data-remove-id="${item.id}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+            <a href="${item.product_url}" target="_blank" rel="noopener noreferrer" class="btn-store-link btn-store-link-sm" title="Visit ${escapeHtml(item.store)}">
+              <span>Visit</span>
+              ${EXT_LINK_ICON}
+            </a>
+          </div>
+        </div>
+      `;
+    });
+
+    savedDrawerList.innerHTML = cardsHtml;
+    if (savedTotalCost) savedTotalCost.innerText = formatBDT(totalEst);
+
+    // Click handler for saved component names (navigate to detail page)
+    savedDrawerList.querySelectorAll('[data-drawer-part-id]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const id = link.dataset.drawerPartId;
+        closeSavedDrawer();
+        showComponentPage(id, true);
+      });
+    });
+
+    // Remove buttons in drawer
+    savedDrawerList.querySelectorAll('[data-remove-id]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = Number(btn.dataset.removeId);
+        removeFavorite(id);
+      });
+    });
+  }
+
+  async function copyTextToClipboard(text) {
+    if (!text) return false;
+    // Layer 1: Modern asynchronous Clipboard API
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch (err) {
+        console.warn('navigator.clipboard.writeText rejected, attempting fallback:', err);
+      }
+    }
+
+    // Layer 2: Synchronous textarea selection + execCommand('copy')
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.setAttribute('readonly', '');
+      textArea.style.position = 'fixed';
+      textArea.style.top = '-9999px';
+      textArea.style.left = '-9999px';
+      textArea.style.opacity = '0';
+      textArea.style.pointerEvents = 'none';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      textArea.setSelectionRange(0, 999999);
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      if (successful) return true;
+    } catch (fallbackErr) {
+      console.error('execCommand copy fallback failed:', fallbackErr);
+    }
+
+    return false;
+  }
+
+  async function exportSavedBOM() {
+    const items = Array.from(state.favorites.values());
+    if (items.length === 0) return;
+
+    let text = `# BOMwala Saved Components (${items.length} items)\n\n`;
+    text += `| # | Component | Store | Stock | Price | Link |\n`;
+    text += `|---|-----------|-------|-------|-------|------|\n`;
+    let totalEst = 0;
+
+    items.forEach((item, idx) => {
+      const priceNum = parseFloat(item.price_bdt);
+      if (!isNaN(priceNum) && priceNum > 0) totalEst += priceNum;
+      const priceStr = priceNum > 0 ? `৳${Math.round(priceNum).toLocaleString('en-IN')}` : 'RFQ';
+      const stockStr = item.is_in_stock ? 'In Stock' : 'Out of Stock';
+      text += `| ${idx + 1} | ${item.name} | ${item.store} | ${stockStr} | ${priceStr} | ${item.product_url} |\n`;
+    });
+
+    text += `\n**Estimated Total:** ৳${Math.round(totalEst).toLocaleString('en-IN')}\n`;
+    text += `Exported from BOMwala Unified Catalog`;
+
+    const copied = await copyTextToClipboard(text);
+    if (copied) {
+      if (exportBomBtn) {
+        exportBomBtn.style.borderColor = 'var(--stock-green)';
+        exportBomBtn.style.color = 'var(--stock-green)';
+      }
+      if (exportBomBtnText) {
+        const oldText = exportBomBtnText.innerText;
+        exportBomBtnText.innerText = 'Copied to Clipboard!';
+        setTimeout(() => {
+          if (exportBomBtnText) exportBomBtnText.innerText = oldText;
+          if (exportBomBtn) {
+            exportBomBtn.style.borderColor = '';
+            exportBomBtn.style.color = '';
+          }
+        }, 2000);
+      }
+      showToast('BOM List copied to clipboard!', true);
+    } else {
+      showToast('Failed to copy BOM list to clipboard');
+    }
+  }
 
   async function init() {
+    initFavorites();
     setupEventListeners();
 
     const initialParams = new URLSearchParams(window.location.search);
@@ -457,15 +827,24 @@
         <div class="empty-state-box">
           <div class="empty-state-icon">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="12"></line>
-              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+              <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+              <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+              <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+              <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+              <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+              <line x1="12" y1="20" x2="12.01" y2="20"></line>
             </svg>
           </div>
-          <h3>Failed to fetch search results</h3>
-          <p style="font-size:0.8rem; margin-top:4px;">Check network connection and backend server.</p>
+          <h3 style="color:var(--text-main); font-size:1.1rem; font-weight:700;">Connection Error</h3>
+          <p style="font-size:0.85rem; margin-top:6px; color:var(--text-muted);">Please check your internet connection and try again.</p>
+          <button id="retrySearchBtn" class="pagination-btn" style="margin-top:14px;">Try Again</button>
         </div>
       `;
+      const retryBtn = document.getElementById('retrySearchBtn');
+      if (retryBtn) {
+        retryBtn.addEventListener('click', () => triggerSearch());
+      }
     }
   }
 
@@ -521,13 +900,28 @@
         ? `Request quote from ${escapeHtml(item.store)} (opens in new tab)`
         : `Buy on ${escapeHtml(item.store)} (opens in new tab)`;
 
+      const isFav = state.favorites.has(Number(item.id));
+      const tableFavBtn = `
+        <button class="table-fav-btn ${isFav ? 'active' : ''}" data-fav-id="${item.id}"
+          title="${isFav ? 'Remove from favorites' : 'Add to favorites'}"
+          aria-label="${isFav ? 'Remove from favorites' : 'Add to favorites'}"
+          onclick="event.stopPropagation(); window.toggleFavoriteById(${item.id});">
+          <svg class="heart-icon" width="13" height="13" viewBox="0 0 24 24" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+        </button>
+      `;
+
       rowsHtml += `
         <tr data-id="${item.id}">
-          <td style="width:52px;">
-            <div class="product-thumb-wrap skeleton-shimmer">
-              <img class="product-thumb" src="${imgSrc}" alt="" loading="lazy"
-                onload="this.classList.add('img-loaded'); this.parentElement.classList.remove('skeleton-shimmer');"
-                onerror="this.onerror=null; this.src='${FALLBACK_IMG}'; this.classList.add('img-loaded'); this.parentElement.classList.remove('skeleton-shimmer');">
+          <td style="width:78px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              ${tableFavBtn}
+              <div class="product-thumb-wrap skeleton-shimmer">
+                <img class="product-thumb" src="${imgSrc}" alt="" loading="lazy"
+                  onload="this.classList.add('img-loaded'); this.parentElement.classList.remove('skeleton-shimmer');"
+                  onerror="this.onerror=null; this.src='${FALLBACK_IMG}'; this.classList.add('img-loaded'); this.parentElement.classList.remove('skeleton-shimmer');">
+              </div>
             </div>
           </td>
           <td>
@@ -561,7 +955,7 @@
         <table class="components-table">
           <thead>
             <tr>
-              <th style="width:52px;">Item</th>
+              <th style="width:78px;">Item</th>
               <th>Component & Store</th>
               <th style="width:130px;">Stock</th>
               <th style="width:120px;">Price</th>
@@ -577,7 +971,7 @@
 
     productsContainer.querySelectorAll('tbody tr').forEach(row => {
       row.addEventListener('click', (e) => {
-        if (e.target.closest('a.btn-store-link')) return;
+        if (e.target.closest('a.btn-store-link') || e.target.closest('.table-fav-btn')) return;
         const id = row.dataset.id;
         if (id) {
           if (e.ctrlKey || e.metaKey || e.button === 1) {
@@ -609,9 +1003,22 @@
         ? `Request quote from ${escapeHtml(item.store)} (opens in new tab)`
         : `Buy on ${escapeHtml(item.store)} (opens in new tab)`;
 
+      const isFav = state.favorites.has(Number(item.id));
+      const cardFavBtn = `
+        <button class="card-fav-btn ${isFav ? 'active' : ''}" data-fav-id="${item.id}"
+          title="${isFav ? 'Remove from favorites' : 'Add to favorites'}"
+          aria-label="${isFav ? 'Remove from favorites' : 'Add to favorites'}"
+          onclick="event.stopPropagation(); window.toggleFavoriteById(${item.id});">
+          <svg class="heart-icon" width="14" height="14" viewBox="0 0 24 24" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+        </button>
+      `;
+
       cardsHtml += `
         <div class="product-card" data-id="${item.id}">
           <div class="card-image-box skeleton-shimmer">
+            ${cardFavBtn}
             <img src="${imgSrc}" alt="" loading="lazy"
               onload="this.classList.add('img-loaded'); this.parentElement.classList.remove('skeleton-shimmer');"
               onerror="this.onerror=null; this.src='${FALLBACK_IMG}'; this.classList.add('img-loaded'); this.parentElement.classList.remove('skeleton-shimmer');">
@@ -642,7 +1049,7 @@
 
     productsContainer.querySelectorAll('.product-card').forEach(card => {
       card.addEventListener('click', (e) => {
-        if (e.target.closest('a.btn-store-link')) return;
+        if (e.target.closest('a.btn-store-link') || e.target.closest('.card-fav-btn')) return;
         const id = card.dataset.id;
         if (id) {
           if (e.ctrlKey || e.metaKey || e.button === 1) {
@@ -662,181 +1069,7 @@
     nextPageBtn.disabled = state.page >= state.totalPages;
   }
 
-  function parseProductContent(compName, rawDesc, rawSpecs) {
-    const specs = {};
 
-    // 1. Ingest and sanitize rawSpecs (from specifications_json or specifications)
-    if (rawSpecs) {
-      let parsed = rawSpecs;
-      if (typeof rawSpecs === 'string') {
-        try {
-          parsed = JSON.parse(rawSpecs);
-        } catch (e) {
-          parsed = null;
-        }
-      }
-      if (parsed && typeof parsed === 'object') {
-        for (const [k, v] of Object.entries(parsed)) {
-          if (k && v !== undefined && v !== null) {
-            let kClean = String(k).trim().replace(/^[0-9]+[.,)]\s*/, '');
-            let vClean = String(v).trim().replace(/\n[0-9]+$/, '').replace(/\r?\n/g, ' ').trim();
-            const lowerK = kClean.toLowerCase();
-            if (kClean.length >= 2 && vClean.length > 0 && !['footprint', 'http', 'https'].includes(lowerK)) {
-              specs[kClean] = vClean;
-            }
-          }
-        }
-      }
-    }
-
-    if (!rawDesc || typeof rawDesc !== 'string') {
-      return { specs, descriptionParagraphs: [], features: [], packages: [] };
-    }
-
-    // Normalize text & clean non-breaking spaces
-    const cleanRaw = rawDesc
-      .replace(/&nbsp;/g, ' ')
-      .replace(/\r\n/g, '\n')
-      .replace(/\r/g, '\n');
-
-    let rawLines = cleanRaw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-
-    // Filter trailing noise words like 'Login', 'Register'
-    if (rawLines.length > 0) {
-      const lastLine = rawLines[rawLines.length - 1].toLowerCase();
-      if (['login', 'register', 'cart', 'checkout'].includes(lastLine)) {
-        rawLines.pop();
-      }
-    }
-
-    // Deduplicate repeated block halves (e.g. ZerOneTechBD where lines 0..N are duplicated as N..2N)
-    const totalLines = rawLines.length;
-    if (totalLines >= 6 && totalLines % 2 === 0) {
-      const half = totalLines / 2;
-      const firstHalf = rawLines.slice(0, half).join('|||');
-      const secondHalf = rawLines.slice(half).join('|||');
-      if (firstHalf === secondHalf) {
-        rawLines = rawLines.slice(0, half);
-      }
-    } else if (totalLines >= 10) {
-      const half = Math.floor(totalLines / 2);
-      let matchCount = 0;
-      for (let j = 0; j < half; j++) {
-        if (rawLines[j] === rawLines[half + j]) matchCount++;
-      }
-      if (matchCount >= half * 0.8) {
-        rawLines = rawLines.slice(0, half);
-      }
-    }
-
-    // Filter consecutive duplicate lines
-    const dedupedLines = [];
-    for (const line of rawLines) {
-      if (dedupedLines.length === 0 || dedupedLines[dedupedLines.length - 1] !== line) {
-        dedupedLines.push(line);
-      }
-    }
-
-    // Filter video scraper noise and raw URLs
-    const filteredLines = [];
-    let skipVideoNoise = false;
-    for (const l of dedupedLines) {
-      const lower = l.toLowerCase();
-      if (lower === 'videos' || lower === 'video') {
-        skipVideoNoise = true;
-        continue;
-      }
-      if (skipVideoNoise) {
-        if (['no', 'found', 'no video found'].includes(lower)) {
-          continue;
-        } else {
-          skipVideoNoise = false;
-        }
-      }
-
-      if (lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('more details:')) {
-        continue;
-      }
-      filteredLines.push(l);
-    }
-
-    const SECTION_HEADER_RE = /^(?:[^\w\s]*\s*)?(?:(?:Product|Technical|Key|Item|Detailed|General)\s+)?(Description|Specifications?|Specs?|Features?|Overview|Package(?:\s+Includes?|\s+List|\s+Contents?)?|Details|Trustworthiness & Safety Disclaimer):?$/i;
-
-    let currentSection = 'main';
-    const descParagraphs = [];
-    const features = [];
-    const packages = [];
-    const lowerCompName = compName ? compName.toLowerCase() : '';
-
-    for (let i = 0; i < filteredLines.length; i++) {
-      const line = filteredLines[i];
-      const lowerLine = line.toLowerCase();
-
-      // Skip redundant component name header at line 0 or 1
-      if (i < 2 && (lowerLine === lowerCompName || lowerLine === `description of ${lowerCompName}`)) {
-        continue;
-      }
-
-      const secMatch = line.match(SECTION_HEADER_RE);
-      if (secMatch) {
-        const header = secMatch[1].toLowerCase();
-        if (header.includes('spec')) currentSection = 'specs';
-        else if (header.includes('feat')) currentSection = 'features';
-        else if (header.includes('pack')) currentSection = 'package';
-        else if (header.includes('detail')) currentSection = 'specs';
-        else if (header.includes('disclaimer')) currentSection = 'disclaimer';
-        else if (header.includes('desc') || header.includes('over')) currentSection = 'desc';
-        else currentSection = 'other';
-        continue;
-      }
-
-      if (currentSection === 'disclaimer' || currentSection === 'other') {
-        continue;
-      }
-
-      // Check for Key: Value on same line (e.g. "1,Temperature Range: 80℃~420℃" or "Interface: Type-C" or "1. Working voltage: 9-20V")
-      const kvMatch = line.match(/^(?:[-*•]|\d+[.,)])?\s*([A-Za-z0-9\s/_\-().]{2,45})\s*[:=]\s*(.+)$/);
-      if (kvMatch) {
-        let key = kvMatch[1].trim().replace(/^[0-9]+[.,)]\s*/, '');
-        const val = kvMatch[2].trim();
-        const lowerKey = key.toLowerCase();
-        if (!['note', 'notes', 'description', 'features', 'specifications', 'package', 'price', 'faq', 'package includes', 'item', 'warning'].includes(lowerKey)) {
-          if (!specs[key]) {
-            specs[key] = val;
-          }
-          continue;
-        }
-      }
-
-      // Check for Package item
-      if (currentSection === 'package' || /^\d+\s*[*x]\s*.+/.test(line)) {
-        const pkgItem = line.replace(/^[-*•]\s*/, '').trim();
-        if (pkgItem.length > 0) {
-          packages.push(pkgItem);
-        }
-        continue;
-      }
-
-      // Check for Feature bullet
-      if (currentSection === 'features' || /^(?:[-*•]|\d+\.)\s+.+/.test(line)) {
-        const featItem = line.replace(/^(?:[-*•]|\d+[.)])\s*/, '').trim();
-        if (featItem.length > 0) {
-          features.push(featItem);
-        }
-        continue;
-      }
-
-      // Normal prose paragraph
-      if (line.length > 10) {
-        const cleanP = line.replace(/^(?:Product\s+)?Description:\s*/i, '').trim();
-        if (cleanP.length > 0) {
-          descParagraphs.push(cleanP);
-        }
-      }
-    }
-
-    return { specs, descriptionParagraphs: descParagraphs, features, packages };
-  }
 
   function renderComponentDetail(comp, comps = []) {
     // Update Page Title & Breadcrumbs
@@ -920,66 +1153,18 @@
       }
     }
 
-    // Parse product content heuristically into structured specs, clean description, features, packages
-    const parsedContent = parseProductContent(
-      comp.name,
-      comp.description,
-      comp.specifications || comp.specifications_json
-    );
-
-    // Render Technical Specifications Grid
-    const specEntries = Object.entries(parsedContent.specs);
-    if (pageSpecsGrid) {
-      if (specEntries.length > 0) {
-        let specsHtml = '';
-        specEntries.forEach(([k, v], idx) => {
-          const rowClass = idx % 2 === 0 ? 'spec-row even' : 'spec-row odd';
-          specsHtml += `
-            <div class="${rowClass}">
-              <span class="spec-key">${escapeHtml(k)}</span>
-              <span class="spec-val">${escapeHtml(v)}</span>
-            </div>
-          `;
-        });
-        pageSpecsGrid.innerHTML = specsHtml;
-      } else {
-        pageSpecsGrid.innerHTML = `<div style="color:var(--text-muted); font-size:0.82rem; padding:16px; text-align:center;">No explicit technical specifications listed by retailer.</div>`;
-      }
-    }
-
-    // Render Clean Description Paragraphs
-    if (pageDescription) {
-      if (parsedContent.descriptionParagraphs.length > 0) {
-        pageDescription.innerHTML = parsedContent.descriptionParagraphs
-          .map(p => `<p class="product-desc-paragraph">${escapeHtml(p)}</p>`)
-          .join('');
-      } else {
-        pageDescription.innerHTML = `<p class="product-desc-paragraph" style="color:var(--text-muted);">No detailed prose description provided by retailer.</p>`;
-      }
-    }
-
-    // Render Key Features
-    if (pageFeaturesBox && pageFeaturesList) {
-      if (parsedContent.features.length > 0) {
-        pageFeaturesList.innerHTML = parsedContent.features
-          .map(f => `<li><span class="list-bullet-dot"></span><span>${escapeHtml(f)}</span></li>`)
-          .join('');
-        pageFeaturesBox.style.display = 'block';
-      } else {
-        pageFeaturesBox.style.display = 'none';
-      }
-    }
-
-    // Render Package Includes
-    if (pagePackageBox && pagePackageList) {
-      if (parsedContent.packages.length > 0) {
-        pagePackageList.innerHTML = parsedContent.packages
-          .map(p => `<li><span class="package-bullet-dot"></span><span>${escapeHtml(p)}</span></li>`)
-          .join('');
-        pagePackageBox.style.display = 'block';
-      } else {
-        pagePackageBox.style.display = 'none';
-      }
+    // Update Favorite Heart Button on detail page
+    const isFav = state.favorites.has(Number(comp.id));
+    if (pageSaveBtn) {
+      pageSaveBtn.classList.toggle('active', isFav);
+      const heartSvg = pageSaveBtn.querySelector('svg');
+      if (heartSvg) heartSvg.setAttribute('fill', isFav ? '#f43f5e' : 'none');
+      if (pageSaveBtnText) pageSaveBtnText.innerText = isFav ? 'Saved' : 'Save';
+      pageSaveBtn.title = isFav ? 'Remove from favorites' : 'Save this component to favorites';
+      pageSaveBtn.onclick = (e) => {
+        e.stopPropagation();
+        toggleFavorite(comp);
+      };
     }
 
     renderComparisons(comps);
@@ -1213,6 +1398,13 @@
     if (applyAndCloseSidebarBtn) applyAndCloseSidebarBtn.addEventListener('click', closeMobileFilters);
     if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', closeMobileFilters);
 
+    // Saved Components Drawer
+    if (savedDrawerOpenBtn) savedDrawerOpenBtn.addEventListener('click', openSavedDrawer);
+    if (savedDrawerCloseBtn) savedDrawerCloseBtn.addEventListener('click', closeSavedDrawer);
+    if (savedDrawerBackdrop) savedDrawerBackdrop.addEventListener('click', closeSavedDrawer);
+    if (clearAllSavedBtn) clearAllSavedBtn.addEventListener('click', clearAllFavorites);
+    if (exportBomBtn) exportBomBtn.addEventListener('click', exportSavedBOM);
+
     searchInput.addEventListener('input', (e) => {
       state.q = e.target.value;
       clearSearchBtn.style.display = state.q ? 'block' : 'none';
@@ -1239,6 +1431,10 @@
         searchInput.focus();
       }
       if (e.key === 'Escape') {
+        if (isSavedDrawerOpen()) {
+          closeSavedDrawer();
+          return;
+        }
         if (state.activePartId) {
           closeComponentPage(true);
         }
@@ -1361,8 +1557,8 @@
 
     if (sharePartBtn) {
       sharePartBtn.addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText(window.location.href);
+        const copied = await copyTextToClipboard(window.location.href);
+        if (copied) {
           const originalText = sharePartBtnText ? sharePartBtnText.innerText : 'Share Link';
           if (sharePartBtnText) sharePartBtnText.innerText = 'Link Copied!';
           sharePartBtn.style.background = 'rgba(34, 197, 94, 0.15)';
@@ -1374,8 +1570,9 @@
             sharePartBtn.style.borderColor = '';
             sharePartBtn.style.color = '';
           }, 2000);
-        } catch (err) {
-          console.error('Failed to copy share link:', err);
+          showToast('Share link copied to clipboard!', true);
+        } else {
+          showToast('Failed to copy share link');
         }
       });
     }

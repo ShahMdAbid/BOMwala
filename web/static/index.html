@@ -12,7 +12,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=5.0">
+  <link rel="stylesheet" href="style.css?v=5.5">
   <link rel="icon" href="data:,">
 </head>
 
@@ -26,15 +26,29 @@
       </div>
 
       <div class="header-actions">
-        <a href="https://notebook.google.com/notebook/d41b8307-f082-48b7-936f-6663286d4853" target="_blank" rel="noopener noreferrer" class="ai-header-btn" title="Open AI Project Planner on Google NotebookLM">
-          <span>AI Project Planner</span>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <a href="https://notebook.google.com/notebook/d41b8307-f082-48b7-936f-6663286d4853" target="_blank"
+          rel="noopener noreferrer" class="ai-header-btn" title="Open BOMwala in Gemini Notebook">
+          <svg class="gemini-sparkle-icon" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M12 0C12 6.627 6.627 12 0 12C6.627 12 12 17.373 12 24C12 17.373 17.373 12 24 12C17.373 12 12 6.627 12 0Z" />
+          </svg>
+          <span>Gemini Notebook</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
             <line x1="7" y1="17" x2="17" y2="7"></line>
             <polyline points="7 7 17 7 17 17"></polyline>
           </svg>
         </a>
+        <button id="savedDrawerOpenBtn" class="saved-header-btn" title="View Saved Components" aria-label="Saved Components">
+          <svg class="heart-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+          <span>Saved</span>
+          <span id="savedCountBadge" class="saved-count-pill" style="display:none;">0</span>
+        </button>
         <button id="mobileFilterToggleBtn" class="mobile-filter-btn" aria-label="Open Filters" title="Filters">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
             <line x1="4" y1="21" x2="4" y2="14"></line>
             <line x1="4" y1="10" x2="4" y2="3"></line>
             <line x1="12" y1="21" x2="12" y2="12"></line>
@@ -87,7 +101,8 @@
     <aside class="sidebar-root" id="sidebarFilters">
       <div class="sidebar-header">
         <div class="sidebar-title">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
             <line x1="4" y1="21" x2="4" y2="14"></line>
             <line x1="4" y1="10" x2="4" y2="3"></line>
             <line x1="12" y1="21" x2="12" y2="12"></line>
@@ -101,8 +116,10 @@
           <span>Filters</span>
         </div>
         <div class="sidebar-header-actions">
-          <button id="resetFiltersBtn" class="sidebar-reset-btn" title="Reset all filters" style="display:none;">Reset</button>
-          <button id="closeSidebarBtn" class="sidebar-close-btn" aria-label="Close Filters" title="Close">&times;</button>
+          <button id="resetFiltersBtn" class="sidebar-reset-btn" title="Reset all filters"
+            style="display:none;">Reset</button>
+          <button id="closeSidebarBtn" class="sidebar-close-btn" aria-label="Close Filters"
+            title="Close">&times;</button>
         </div>
       </div>
 
@@ -223,11 +240,12 @@
   <!-- Dedicated Component Detail Page (Direct shareable view: ?part=id) -->
   <main id="productDetailPage" class="product-page-root" style="display: none;">
     <div class="product-page-container">
-      
+
       <!-- Top Action & Breadcrumb Navigation -->
       <div class="product-page-nav">
         <button id="backToCatalogBtn" class="btn-back-catalog" title="Return to catalog (Esc)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>
           </svg>
@@ -236,15 +254,19 @@
         </button>
 
         <nav class="product-breadcrumb" aria-label="Breadcrumb">
-          <button type="button" class="crumb-link" id="crumbHomeBtn" title="Return to all components in Catalog">Catalog</button>
+          <button type="button" class="crumb-link" id="crumbHomeBtn"
+            title="Return to all components in Catalog">Catalog</button>
           <span class="crumb-sep" id="crumbSepCat">/</span>
-          <button type="button" class="crumb-link" id="crumbCategory" title="Filter catalog by this category">Electronics</button>
+          <button type="button" class="crumb-link" id="crumbCategory"
+            title="Filter catalog by this category">Electronics</button>
           <span class="crumb-sep">/</span>
-          <button type="button" class="crumb-link crumb-current" id="crumbStore" title="Filter catalog by this retailer">TechShopBD</button>
+          <button type="button" class="crumb-link crumb-current" id="crumbStore"
+            title="Filter catalog by this retailer">TechShopBD</button>
         </nav>
 
         <button id="sharePartBtn" class="btn-share-part" title="Copy shareable direct link">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
             <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
             <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
           </svg>
@@ -260,7 +282,7 @@
 
       <!-- Product Page Content Root -->
       <div id="productPageContent" class="product-page-content-wrapper">
-        
+
         <!-- Full-Width Hero Card: Product Media + Identifiers, Title & Price Action Bar -->
         <header class="product-hero-card">
           <div class="product-hero-media">
@@ -286,77 +308,36 @@
                 <div id="pagePrice" class="product-page-price">৳ 0</div>
               </div>
               <div class="action-buttons-box">
-                <a id="pageBuyLink" href="#" target="_blank" rel="noopener noreferrer" class="btn-buy-primary" title="Open product on retailer store">
+                <button id="pageSaveBtn" class="btn-save-detail" title="Save this component to favorites" aria-label="Save Component">
+                  <svg class="heart-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                  <span id="pageSaveBtnText">Save</span>
+                </button>
+                <a id="pageBuyLink" href="#" target="_blank" rel="noopener noreferrer" class="btn-buy-primary"
+                  title="Open product on retailer store">
                   <span>Visit Retailer Page</span>
-                  <svg class="ext-arrow-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                  <svg class="ext-arrow-icon" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                  </svg>
                 </a>
               </div>
             </div>
           </div>
         </header>
 
-        <!-- Balanced 2-Column Content Grid Below Hero -->
-        <div class="product-details-grid">
-          
-          <!-- Primary Column: Description, Key Features & Package List -->
-          <div class="product-col-primary">
-            
-            <!-- Description Card -->
-            <div class="product-section-card">
-              <div class="section-card-title-row">
-                <h3 class="section-card-title">Overview & Description</h3>
-              </div>
-              <div id="pageDescription" class="product-desc-container">
-                No description provided.
-              </div>
-            </div>
-
-            <!-- Key Features Card -->
-            <div id="pageFeaturesBox" class="product-section-card" style="display: none;">
-              <div class="section-card-title-row">
-                <h3 class="section-card-title">Key Features & Highlights</h3>
-              </div>
-              <ul class="features-list" id="pageFeaturesList"></ul>
-            </div>
-
-            <!-- Package Contents Card -->
-            <div id="pagePackageBox" class="product-section-card" style="display: none;">
-              <div class="section-card-title-row">
-                <h3 class="section-card-title">Package Contents</h3>
-              </div>
-              <ul class="package-list" id="pagePackageList"></ul>
-            </div>
-
+        <!-- Cross-Store Comparison (Similar products from other retailers) -->
+        <div class="product-section-card comparison-section-card" id="pageComparisonCard">
+          <div class="section-card-title-row">
+            <h3 class="section-card-title">Similar products from other retailers</h3>
+            <span class="live-tag">BD Retailers</span>
           </div>
-
-          <!-- Secondary Column: Cross-Store Comparison & Technical Specs -->
-          <div class="product-col-secondary">
-            
-            <!-- Similar products from other retailers -->
-            <div class="product-section-card comparison-section-card">
-              <div class="section-card-title-row">
-                <h3 class="section-card-title">Similar products from other retailers</h3>
-                <span class="live-tag">BD Retailers</span>
-              </div>
-              <div class="comparison-list" id="pageComparisonList">
-                <!-- Dynamically populated -->
-              </div>
-            </div>
-
-            <!-- Technical Specifications -->
-            <div class="product-section-card">
-              <div class="section-card-title-row">
-                <h3 class="section-card-title">Technical Specifications</h3>
-              </div>
-              <div class="spec-table-container" id="pageSpecsContainer">
-                <div class="specs-table-ui" id="pageSpecsGrid">
-                  <!-- Dynamically populated -->
-                </div>
-              </div>
-            </div>
-
+          <div class="comparison-list" id="pageComparisonList">
+            <!-- Dynamically populated -->
           </div>
-
         </div>
 
       </div>
@@ -364,7 +345,55 @@
     </div>
   </main>
 
-  <script src="app.js?v=5.0"></script>
+  <!-- Slide-Over Saved / Favorites Drawer Backdrop -->
+  <div id="savedDrawerBackdrop" class="drawer-backdrop" title="Close Saved Components"></div>
+
+  <!-- Slide-Over Saved / Favorites Drawer -->
+  <aside id="savedDrawer" class="saved-drawer" aria-label="Saved Components Drawer">
+    <div class="saved-drawer-header">
+      <div class="saved-drawer-title">
+        <svg class="heart-icon" width="16" height="16" viewBox="0 0 24 24" fill="#f43f5e" stroke="#f43f5e" stroke-width="2">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+        <span>Saved Components</span>
+        <span id="drawerTotalCountBadge" class="saved-count-pill" style="display:none;">0</span>
+      </div>
+      <div class="saved-drawer-actions">
+        <button id="clearAllSavedBtn" class="drawer-clear-btn" title="Clear all saved components" style="display:none;">Clear All</button>
+        <button id="savedDrawerCloseBtn" class="drawer-close-btn" aria-label="Close Saved Drawer" title="Close">&times;</button>
+      </div>
+    </div>
+
+    <!-- Drawer Items List -->
+    <div class="saved-drawer-body" id="savedDrawerList">
+      <!-- Dynamically populated -->
+    </div>
+
+    <!-- Drawer Footer / Summary -->
+    <div class="saved-drawer-footer" id="savedDrawerFooter" style="display:none;">
+      <div class="saved-footer-summary">
+        <span class="saved-summary-label">Estimated Total:</span>
+        <span class="saved-summary-value" id="savedTotalCost">৳ 0</span>
+      </div>
+      <button id="exportBomBtn" class="btn-export-bom" title="Copy saved component list as formatted BOM">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+          <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+        </svg>
+        <span id="exportBomBtnText">Copy BOM List</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Global Action Toast Notification -->
+  <div id="appToast" class="app-toast" role="status" aria-live="polite">
+    <svg class="toast-icon-heart" width="15" height="15" viewBox="0 0 24 24">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+    </svg>
+    <span id="appToastText">Notification</span>
+  </div>
+
+  <script src="app.js?v=5.7"></script>
 </body>
 
 </html>
